@@ -8,7 +8,7 @@ __all__ = (
     "data_types",
     "parse_version",
     "FBXElem",
-    )
+)
 
 from struct import unpack
 import array
@@ -126,7 +126,7 @@ read_data_dict = {
     b'L'[0]: lambda read: unpack(b'<q', read(8))[0],  # 64 bit int
     b'R'[0]: lambda read: read(read_uint(read)),      # binary data
     b'S'[0]: lambda read: read(read_uint(read)),      # string data
-    }
+}
 
 
 # FBX 7500 (aka FBX2016) introduces incompatible changes at binary level:

@@ -104,37 +104,37 @@ FBX_LIGHT_DECAY_TYPES = {
 
 RIGHT_HAND_AXES = {
     # Up, Forward -> FBX values (tuples of (axis, sign), Up, Front, Coord).
-    ( 'X', '-Y'): ((0,  1), (1,  1), (2,  1)),
-    ( 'X',  'Y'): ((0,  1), (1, -1), (2, -1)),
-    ( 'X', '-Z'): ((0,  1), (2,  1), (1, -1)),
-    ( 'X',  'Z'): ((0,  1), (2, -1), (1,  1)),
-    ('-X', '-Y'): ((0, -1), (1,  1), (2, -1)),
-    ('-X',  'Y'): ((0, -1), (1, -1), (2,  1)),
-    ('-X', '-Z'): ((0, -1), (2,  1), (1,  1)),
-    ('-X',  'Z'): ((0, -1), (2, -1), (1, -1)),
-    ( 'Y', '-X'): ((1,  1), (0,  1), (2, -1)),
-    ( 'Y',  'X'): ((1,  1), (0, -1), (2,  1)),
-    ( 'Y', '-Z'): ((1,  1), (2,  1), (0,  1)),
-    ( 'Y',  'Z'): ((1,  1), (2, -1), (0, -1)),
-    ('-Y', '-X'): ((1, -1), (0,  1), (2,  1)),
-    ('-Y',  'X'): ((1, -1), (0, -1), (2, -1)),
-    ('-Y', '-Z'): ((1, -1), (2,  1), (0, -1)),
-    ('-Y',  'Z'): ((1, -1), (2, -1), (0,  1)),
-    ( 'Z', '-X'): ((2,  1), (0,  1), (1,  1)),
-    ( 'Z',  'X'): ((2,  1), (0, -1), (1, -1)),
-    ( 'Z', '-Y'): ((2,  1), (1,  1), (0, -1)),
-    ( 'Z',  'Y'): ((2,  1), (1, -1), (0,  1)),  # Blender system!
-    ('-Z', '-X'): ((2, -1), (0,  1), (1, -1)),
-    ('-Z',  'X'): ((2, -1), (0, -1), (1,  1)),
-    ('-Z', '-Y'): ((2, -1), (1,  1), (0,  1)),
-    ('-Z',  'Y'): ((2, -1), (1, -1), (0, -1)),
+    ('X', '-Y'): ((0, 1), (1, 1), (2, 1)),
+    ('X', 'Y'): ((0, 1), (1, -1), (2, -1)),
+    ('X', '-Z'): ((0, 1), (2, 1), (1, -1)),
+    ('X', 'Z'): ((0, 1), (2, -1), (1, 1)),
+    ('-X', '-Y'): ((0, -1), (1, 1), (2, -1)),
+    ('-X', 'Y'): ((0, -1), (1, -1), (2, 1)),
+    ('-X', '-Z'): ((0, -1), (2, 1), (1, 1)),
+    ('-X', 'Z'): ((0, -1), (2, -1), (1, -1)),
+    ('Y', '-X'): ((1, 1), (0, 1), (2, -1)),
+    ('Y', 'X'): ((1, 1), (0, -1), (2, 1)),
+    ('Y', '-Z'): ((1, 1), (2, 1), (0, 1)),
+    ('Y', 'Z'): ((1, 1), (2, -1), (0, -1)),
+    ('-Y', '-X'): ((1, -1), (0, 1), (2, 1)),
+    ('-Y', 'X'): ((1, -1), (0, -1), (2, -1)),
+    ('-Y', '-Z'): ((1, -1), (2, 1), (0, -1)),
+    ('-Y', 'Z'): ((1, -1), (2, -1), (0, 1)),
+    ('Z', '-X'): ((2, 1), (0, 1), (1, 1)),
+    ('Z', 'X'): ((2, 1), (0, -1), (1, -1)),
+    ('Z', '-Y'): ((2, 1), (1, 1), (0, -1)),
+    ('Z', 'Y'): ((2, 1), (1, -1), (0, 1)),  # Blender system!
+    ('-Z', '-X'): ((2, -1), (0, 1), (1, -1)),
+    ('-Z', 'X'): ((2, -1), (0, -1), (1, 1)),
+    ('-Z', '-Y'): ((2, -1), (1, 1), (0, 1)),
+    ('-Z', 'Y'): ((2, -1), (1, -1), (0, -1)),
 }
 
 
 # NOTE: Not fully in enum value order, since when exporting the first entry matching the framerate value is used
 # (e.g. better have NTSC fullframe than NTSC drop frame for 29.97 framerate).
 FBX_FRAMERATES = (
-    #(-1.0, 0),  # Default framerate.
+    # (-1.0, 0),  # Default framerate.
     (-1.0, 14),  # Custom framerate.
     (120.0, 1),
     (100.0, 2),
@@ -147,7 +147,7 @@ FBX_FRAMERATES = (
     (30.0 / 1.001, 8),  # Color NTSC, drop frame.
     (25.0, 10),
     (24.0, 11),
-    #(1.0, 12),  # 1000 milli/s (use for date time?).
+    # (1.0, 12),  # 1000 milli/s (use for date time?).
     (24.0 / 1.001, 13),
     (96.0, 15),
     (72.0, 16),
@@ -259,7 +259,7 @@ def matrix4_to_array(mat):
 def array_to_matrix4(arr):
     """Convert a single 16-len tuple into a valid 4D Blender matrix"""
     # Blender matrix is row major, fbx is col major so transpose on read
-    return Matrix(tuple(zip(*[iter(arr)]*4))).transposed()
+    return Matrix(tuple(zip(*[iter(arr)] * 4))).transposed()
 
 
 def parray_as_ndarray(arr):
@@ -1510,7 +1510,7 @@ class AnimationCurveNodeWrapper:
 
         force_keep = force_keep or self.force_keying
         for elem_key, fbx_group, fbx_gname, fbx_props in \
-            zip(self.elem_keys, self.fbx_group, self.fbx_gname, self.fbx_props):
+                zip(self.elem_keys, self.fbx_group, self.fbx_gname, self.fbx_props):
             group_key = get_blender_anim_curve_node_key(scene, ref_id, elem_key, fbx_group)
             group = {}
             for c, def_val, fbx_item in zip(curves, self.default_values, fbx_props):
@@ -1659,7 +1659,7 @@ class ObjectWrapper(metaclass=MetaObjectWrapper):
     def get_parent(self):
         if self._tag == 'OB':
             if (self.bdata.parent and self.bdata.parent.type == 'ARMATURE' and
-                self.bdata.parent_type == 'BONE' and self.bdata.parent_bone):
+                    self.bdata.parent_type == 'BONE' and self.bdata.parent_bone):
                 # Try to parent to a bone.
                 bo_par = self.bdata.parent.pose.bones.get(self.bdata.parent_bone, None)
                 if (bo_par):
@@ -1872,7 +1872,7 @@ class ObjectWrapper(metaclass=MetaObjectWrapper):
     def dupli_list_gen(self, depsgraph):
         if self._tag == 'OB' and self.bdata.is_instancer:
             return (ObjectWrapper(dup) for dup in depsgraph.object_instances
-                                       if dup.parent and ObjectWrapper(dup.parent.original) == self)
+                    if dup.parent and ObjectWrapper(dup.parent.original) == self)
         return ()
 
 
