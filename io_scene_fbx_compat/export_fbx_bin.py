@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-# <pep8 compliant>
-
 # Script copyright (C) Campbell Barton, Bastien Montagne
 
 
@@ -867,9 +865,9 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
         if last_subsurf:
             elem_data_single_int32(geom, b"Smoothness", 2) # Display control mesh and smoothed
             if last_subsurf.boundary_smooth == "PRESERVE_CORNERS":
-                elem_data_single_int32(geom, b"BoundaryRule", 2) # CreaseAll
+                elem_data_single_int32(geom, b"BoundaryRule", 1) # CreaseAll
             else:
-                elem_data_single_int32(geom, b"BoundaryRule", 1) # CreaseEdge
+                elem_data_single_int32(geom, b"BoundaryRule", 2) # CreaseEdge
             elem_data_single_int32(geom, b"PreviewDivisionLevels", last_subsurf.levels)
             elem_data_single_int32(geom, b"RenderDivisionLevels", last_subsurf.render_levels)
 
@@ -2831,6 +2829,7 @@ def fbx_header_elements(root, scene_data, time=None):
         if similar_values(fps, ref_fps):
             fbx_fps = ref_fps
             fbx_fps_mode = fps_mode
+            break
     elem_props_set(props, "p_enum", b"TimeMode", fbx_fps_mode)
     elem_props_set(props, "p_timestamp", b"TimeSpanStart", 0)
     elem_props_set(props, "p_timestamp", b"TimeSpanStop", FBX_KTIME)
