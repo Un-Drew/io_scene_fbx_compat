@@ -1188,7 +1188,7 @@ def blen_read_geom_layer_normal(fbx_obj, mesh, xform=None):
                 for pidx, p in enumerate(mesh.polygons):
                     for lidx in range(p.loop_start, p.loop_start + p.loop_total):
                         mesh.loops[lidx].normal[:] = bdata[pidx]
-            elif blen_data_type is "Vertices":
+            elif blen_data_type == "Vertices":
                 # We have to copy vnors to lnors! Far from elegant, but simple.
                 for l in mesh.loops:
                     l.normal[:] = bdata[l.vertex_index]
@@ -2307,17 +2307,6 @@ class FbxImportHelperNode:
             return None
 
 
-def is_ascii(filepath, size):
-    with open(filepath, 'r', encoding="utf-8") as f:
-        try:
-            f.read(size)
-            return True
-        except UnicodeDecodeError:
-            pass
-
-    return False
-
-
 def load(operator, context, filepath="",
          use_manual_orientation=False,
          axis_forward='-Z',
@@ -2358,10 +2347,24 @@ def load(operator, context, filepath="",
     perfmon.step("FBX Import: start importing %s" % filepath)
     perfmon.level_up()
 
-    # detect ascii files
-    if is_ascii(filepath, 24):
+    # Detect ASCII files.
+
+    # Typically it's bad practice to fail silently on any error,
+    # however the file may fail to read for many reasons,
+    # and this situation is handled later in the code,
+    # right now we only want to know if the file successfully reads as ascii.
+    try:
+        with open(filepath, 'r', encoding="utf-8") as fh:
+            fh.read(24)
+        is_ascii = True
+    except Exception:
+        is_ascii = False
+
+    if is_ascii:
         operator.report({'ERROR'}, "ASCII FBX files are not supported %r" % filepath)
         return {'CANCELLED'}
+    del is_ascii
+    # End ascii detection.
 
     try:
         elem_root, version = parse_fbx.parse(filepath)
@@ -2630,7 +2633,7 @@ def load(operator, context, filepath="",
         return [(c_found[0], c_found[1], c_type)
                 for (c_uuid, c_type) in dct.get(fbx_uuid, ())
                 # 0 is used for the root node, which isnt in fbx_table_nodes
-                for c_found in (() if c_uuid is 0 else (fbx_table_nodes.get(c_uuid, (None, None)),))
+                for c_found in (() if c_uuid == 0 else (fbx_table_nodes.get(c_uuid, (None, None)),))
                 if (fbx_id is None) or (c_found[0] and c_found[0].id == fbx_id)]
 
     def connection_filter_forward(fbx_uuid, fbx_id):
