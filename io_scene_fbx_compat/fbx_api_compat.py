@@ -18,6 +18,38 @@ import bpy_extras.node_shader_utils
 
 __author__ = "UnDrew"
 
+def cycle_to_num(cycle):
+    if cycle == 'alpha':
+        return 0
+    elif cycle == 'beta':
+        return 1
+    elif cycle == 'rc':
+        return 2
+    else:
+        # Even if this isn't 'release', assume it anyway, as there could be Extra Secret cylce vals I'm not aware of. :S
+        return 3
+
+BL_VER_MAJOR, BL_VER_MINOR, BL_VER_MICRO = bpy.app.version
+BL_VER_CYCLE = cycle_to_num(bpy.app.version_cycle)
+
+def check_ver(min_major, min_minor, min_micro, tie_breaker=True):
+    if BL_VER_MAJOR > min_major:
+        return True
+    if BL_VER_MAJOR < min_major:
+        return False
+    if BL_VER_MINOR > min_minor:
+        return True
+    if BL_VER_MINOR < min_minor:
+        return False
+    if BL_VER_MICRO > min_micro:
+        return True
+    if BL_VER_MICRO < min_micro:
+        return False
+    return tie_breaker
+
+def check_cycle(min_cycle):
+    return BL_VER_CYCLE >= cycle_to_num(min_cycle)
+
 # Checks whether a bpy type (an RNA struct) has a property by name.
 # Source: https://blender.stackexchange.com/a/300562
 def bpy_type_has_prop(btype, propname):
@@ -58,3 +90,8 @@ HAS_VRTX_AND_PLGN_NORM_ARRAYS = bpy_type_has_prop(bpy.types.Mesh, 'vertex_normal
 """ Added in 3.2.0 """
 
 HAS_MESH_COLOR_ATTRIBUTES = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
+
+""" Added in 3.4.0 """
+
+HAS_REFACTORED_EDGE_CREASES = bpy_type_has_prop(bpy.types.Mesh, 'edge_creases')  # added 'has_crease_edge' at same time
+HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, check_cycle('beta'))  # unsure how to check this more concretely...
