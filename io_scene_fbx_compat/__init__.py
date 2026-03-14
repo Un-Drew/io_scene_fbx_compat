@@ -360,7 +360,7 @@ class FBX_COMPAT_PT_import_armature(bpy.types.Panel):
 class ExportFBX_compat(bpy.types.Operator, ExportHelper):
     """Write a FBX file"""
     bl_idname = "export_scene.fbx_compat"
-    bl_label = "Export FBX"
+    bl_label = "Export FBX (Compat)"
     bl_options = {'UNDO', 'PRESET'}
 
     filename_ext = ".fbx"
