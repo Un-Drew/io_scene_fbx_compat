@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FBX format - Compat",
     "author": "Back-compat by: UnDrew, Original add-on by: Blender Foundation",
-    "version": (2, 91, 2),
+    "version": (2, 92, 0),
     "blender": (2, 81, 0),
     "location": "File > Import-Export",
     "description": "FBX addon patched for backwards-compatibility",
@@ -406,6 +406,13 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
                         "(Blender uses FBX scale to detect units on import, "
                         "but many other applications do not handle the same way)",
             )
+
+    use_space_transform: BoolProperty(
+            name="Use Space Transform",
+            description="Apply global space transform to the object rotations. When disabled "
+                        "only the axis space is written to the file and all object transforms are left as-is",
+            default=True,
+            )
     bake_space_transform: BoolProperty(
             name="Apply Transform",
             description="Bake space transform into object data, avoids getting unwanted rotations to objects when "
@@ -603,7 +610,8 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
 
         global_matrix = (axis_conversion(to_forward=self.axis_forward,
                                          to_up=self.axis_up,
-                                         ).to_4x4())
+                                         ).to_4x4()
+                        if self.use_space_transform else Matrix())
 
         keywords = self.as_keywords(ignore=("check_existing",
                                             "filter_glob",
@@ -707,6 +715,7 @@ class FBX_COMPAT_PT_export_transform(bpy.types.Panel):
         layout.prop(operator, "axis_up")
 
         layout.prop(operator, "apply_unit_scale")
+        layout.prop(operator, "use_space_transform")
         row = layout.row()
         row.prop(operator, "bake_space_transform")
         row.label(text="", icon='ERROR')
