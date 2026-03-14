@@ -1,33 +1,13 @@
-# ##### BEGIN GPL LICENSE BLOCK #####
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU General Public License
-#  as published by the Free Software Foundation; either version 2
-#  of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-#
-# ##### END GPL LICENSE BLOCK #####
-
-# <pep8 compliant>
-
 bl_info = {
-    "name": "FBX format",
-    "author": "Campbell Barton, Bastien Montagne, Jens Restemeier",
-    "version": (4, 21, 3),
-    "blender": (2, 90, 0),
+    "name": "FBX format - Compat",
+    "author": "Back-compat by: UnDrew, Original add-on by: Blender Foundation",
+    "version": (2, 90, 1),
+    "blender": (2, 81, 0),
     "location": "File > Import-Export",
-    "description": "FBX IO meshes, UV's, vertex colors, materials, textures, cameras, lamps and actions",
+    "description": "FBX addon patched for backwards-compatibility",
     "warning": "",
     "doc_url": "{BLENDER_MANUAL_URL}/addons/import_export/scene_fbx.html",
-    "support": 'OFFICIAL',
+    "support": 'COMMUNITY',
     "category": "Import-Export",
 }
 
@@ -60,10 +40,10 @@ from bpy_extras.io_utils import (
 
 
 @orientation_helper(axis_forward='-Z', axis_up='Y')
-class ImportFBX(bpy.types.Operator, ImportHelper):
+class ImportFBX_compat(bpy.types.Operator, ImportHelper):
     """Load a FBX file"""
-    bl_idname = "import_scene.fbx"
-    bl_label = "Import FBX"
+    bl_idname = "import_scene.fbx_compat"
+    bl_label = "Import FBX (Compat)"
     bl_options = {'UNDO', 'PRESET'}
 
     directory: StringProperty()
@@ -220,7 +200,7 @@ class ImportFBX(bpy.types.Operator, ImportHelper):
             return import_fbx.load(self, context, filepath=self.filepath, **keywords)
 
 
-class FBX_PT_import_include(bpy.types.Panel):
+class FBX_COMPAT_PT_import_include(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Include"
@@ -231,7 +211,7 @@ class FBX_PT_import_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "IMPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "IMPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -250,7 +230,7 @@ class FBX_PT_import_include(bpy.types.Panel):
         layout.prop(operator, "use_image_search")
 
 
-class FBX_PT_import_transform(bpy.types.Panel):
+class FBX_COMPAT_PT_import_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Transform"
@@ -261,7 +241,7 @@ class FBX_PT_import_transform(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "IMPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "IMPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -279,18 +259,18 @@ class FBX_PT_import_transform(bpy.types.Panel):
         layout.prop(operator, "use_prepost_rot")
 
 
-class FBX_PT_import_transform_manual_orientation(bpy.types.Panel):
+class FBX_COMPAT_PT_import_transform_manual_orientation(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Manual Orientation"
-    bl_parent_id = "FBX_PT_import_transform"
+    bl_parent_id = "FBX_COMPAT_PT_import_transform"
 
     @classmethod
     def poll(cls, context):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "IMPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "IMPORT_SCENE_OT_fbx_compat"
 
     def draw_header(self, context):
         sfile = context.space_data
@@ -312,7 +292,7 @@ class FBX_PT_import_transform_manual_orientation(bpy.types.Panel):
         layout.prop(operator, "axis_up")
 
 
-class FBX_PT_import_animation(bpy.types.Panel):
+class FBX_COMPAT_PT_import_animation(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Animation"
@@ -324,7 +304,7 @@ class FBX_PT_import_animation(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "IMPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "IMPORT_SCENE_OT_fbx_compat"
 
     def draw_header(self, context):
         sfile = context.space_data
@@ -345,7 +325,7 @@ class FBX_PT_import_animation(bpy.types.Panel):
         layout.prop(operator, "anim_offset")
 
 
-class FBX_PT_import_armature(bpy.types.Panel):
+class FBX_COMPAT_PT_import_armature(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Armature"
@@ -357,7 +337,7 @@ class FBX_PT_import_armature(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "IMPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "IMPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -377,9 +357,9 @@ class FBX_PT_import_armature(bpy.types.Panel):
 
 
 @orientation_helper(axis_forward='-Z', axis_up='Y')
-class ExportFBX(bpy.types.Operator, ExportHelper):
+class ExportFBX_compat(bpy.types.Operator, ExportHelper):
     """Write a FBX file"""
-    bl_idname = "export_scene.fbx"
+    bl_idname = "export_scene.fbx_compat"
     bl_label = "Export FBX"
     bl_options = {'UNDO', 'PRESET'}
 
@@ -636,7 +616,7 @@ class ExportFBX(bpy.types.Operator, ExportHelper):
         return export_fbx_bin.save(self, context, **keywords)
 
 
-class FBX_PT_export_main(bpy.types.Panel):
+class FBX_COMPAT_PT_export_main(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = ""
@@ -648,7 +628,7 @@ class FBX_PT_export_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -669,7 +649,7 @@ class FBX_PT_export_main(bpy.types.Panel):
         sub.prop(operator, "use_batch_own_dir", text="", icon='NEWFOLDER')
 
 
-class FBX_PT_export_include(bpy.types.Panel):
+class FBX_COMPAT_PT_export_include(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Include"
@@ -680,7 +660,7 @@ class FBX_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -699,7 +679,7 @@ class FBX_PT_export_include(bpy.types.Panel):
         layout.prop(operator, "use_custom_props")
 
 
-class FBX_PT_export_transform(bpy.types.Panel):
+class FBX_COMPAT_PT_export_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Transform"
@@ -710,7 +690,7 @@ class FBX_PT_export_transform(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -732,7 +712,7 @@ class FBX_PT_export_transform(bpy.types.Panel):
         row.label(text="", icon='ERROR')
 
 
-class FBX_PT_export_geometry(bpy.types.Panel):
+class FBX_COMPAT_PT_export_geometry(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Geometry"
@@ -744,7 +724,7 @@ class FBX_PT_export_geometry(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -766,7 +746,7 @@ class FBX_PT_export_geometry(bpy.types.Panel):
         sub.prop(operator, "use_tspace")
 
 
-class FBX_PT_export_armature(bpy.types.Panel):
+class FBX_COMPAT_PT_export_armature(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Armature"
@@ -778,7 +758,7 @@ class FBX_PT_export_armature(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw(self, context):
         layout = self.layout
@@ -795,7 +775,7 @@ class FBX_PT_export_armature(bpy.types.Panel):
         layout.prop(operator, "add_leaf_bones")
 
 
-class FBX_PT_export_bake_animation(bpy.types.Panel):
+class FBX_COMPAT_PT_export_bake_animation(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Bake Animation"
@@ -807,7 +787,7 @@ class FBX_PT_export_bake_animation(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        return operator.bl_idname == "EXPORT_SCENE_OT_fbx"
+        return operator.bl_idname == "EXPORT_SCENE_OT_fbx_compat"
 
     def draw_header(self, context):
         sfile = context.space_data
@@ -833,27 +813,27 @@ class FBX_PT_export_bake_animation(bpy.types.Panel):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportFBX.bl_idname, text="FBX (.fbx)")
+    self.layout.operator(ImportFBX_compat.bl_idname, text="FBX - Compat (.fbx)")
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportFBX.bl_idname, text="FBX (.fbx)")
+    self.layout.operator(ExportFBX_compat.bl_idname, text="FBX - Compat (.fbx)")
 
 
 classes = (
-    ImportFBX,
-    FBX_PT_import_include,
-    FBX_PT_import_transform,
-    FBX_PT_import_transform_manual_orientation,
-    FBX_PT_import_animation,
-    FBX_PT_import_armature,
-    ExportFBX,
-    FBX_PT_export_main,
-    FBX_PT_export_include,
-    FBX_PT_export_transform,
-    FBX_PT_export_geometry,
-    FBX_PT_export_armature,
-    FBX_PT_export_bake_animation,
+    ImportFBX_compat,
+    FBX_COMPAT_PT_import_include,
+    FBX_COMPAT_PT_import_transform,
+    FBX_COMPAT_PT_import_transform_manual_orientation,
+    FBX_COMPAT_PT_import_animation,
+    FBX_COMPAT_PT_import_armature,
+    ExportFBX_compat,
+    FBX_COMPAT_PT_export_main,
+    FBX_COMPAT_PT_export_include,
+    FBX_COMPAT_PT_export_transform,
+    FBX_COMPAT_PT_export_geometry,
+    FBX_COMPAT_PT_export_armature,
+    FBX_COMPAT_PT_export_bake_animation,
 )
 
 
