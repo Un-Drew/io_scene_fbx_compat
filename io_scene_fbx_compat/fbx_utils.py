@@ -127,7 +127,8 @@ FBX_FRAMERATES = (
 
 # ##### Misc utilities #####
 
-DO_PERFMON = True
+# Enable performance reports (measuring time used to perform various steps of importing or exporting).
+DO_PERFMON = False
 
 if DO_PERFMON:
     class PerfMon():

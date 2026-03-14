@@ -523,8 +523,12 @@ def fbx_data_element_custom_properties(props, bid):
     rna_properties = {prop.identifier for prop in bid.bl_rna.properties if prop.is_runtime}
 
     for k, v in items:
-        if k == '_RNA_UI' or k in rna_properties:
+        if k in rna_properties:
             continue
+        # COMPAT ADD BEGIN
+        if k == '_RNA_UI' and not api_compat.HAS_REFACTORED_UI_DATA:
+            continue
+        # COMPAT ADD END
 
         list_val = getattr(v, "to_list", lambda: None)()
 
@@ -860,7 +864,12 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
 
         if last_subsurf:
             elem_data_single_int32(geom, b"Smoothness", 2) # Display control mesh and smoothed
-            elem_data_single_int32(geom, b"BoundaryRule", 2) # Round edges like Blender
+            # COMPAT EDIT BEGIN
+            if api_compat.HAS_SUBSURF_BOUNDARY_SMOOTH and last_subsurf.boundary_smooth == "PRESERVE_CORNERS":
+            # COMPAT EDIT END
+                elem_data_single_int32(geom, b"BoundaryRule", 2) # CreaseAll
+            else:
+                elem_data_single_int32(geom, b"BoundaryRule", 1) # CreaseEdge
             elem_data_single_int32(geom, b"PreviewDivisionLevels", last_subsurf.levels)
             elem_data_single_int32(geom, b"RenderDivisionLevels", last_subsurf.render_levels)
 
@@ -2078,8 +2087,14 @@ def fbx_animations(scene_data):
             ob = ob_obj.bdata  # Back to real Blender Object.
             if not ob.animation_data:
                 continue
+
+            # Some actions are read-only, one cause is being in NLA tweakmode
+            restore_use_tweak_mode = ob.animation_data.use_tweak_mode
+            if ob.animation_data.is_property_readonly('action'):
+              ob.animation_data.use_tweak_mode = False
+
             # We have to remove active action from objects, it overwrites strips actions otherwise...
-            ob_actions.append((ob, ob.animation_data.action))
+            ob_actions.append((ob, ob.animation_data.action, restore_use_tweak_mode))
             ob.animation_data.action = None
             for track in ob.animation_data.nla_tracks:
                 if track.mute:
@@ -2100,8 +2115,9 @@ def fbx_animations(scene_data):
         for strip in strips:
             strip.mute = False
 
-        for ob, ob_act in ob_actions:
+        for ob, ob_act, restore_use_tweak_mode in ob_actions:
             ob.animation_data.action = ob_act
+            ob.animation_data.use_tweak_mode = restore_use_tweak_mode
 
     # All actions.
     if scene_data.settings.bake_anim_use_all_actions:
@@ -3204,7 +3220,7 @@ def save(operator, context,
             for scene in scenes:
                 if not scene.objects:
                     continue
-                #                                      Needed to avoid having tens of 'Master Collection' entries.
+                # Needed to avoid having tens of 'Scene Collection' entries.
                 todo_collections = [(scene.collection, "_".join((scene.name, scene.collection.name)))]
                 while todo_collections:
                     coll, coll_name = todo_collections.pop()
