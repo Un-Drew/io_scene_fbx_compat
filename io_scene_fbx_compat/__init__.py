@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FBX format - Compat",
     "author": "Back-compat by: UnDrew, Original add-on by: Blender Foundation",
-    "version": (3, 1, 0),
+    "version": (3, 2, 0),
     "blender": (2, 81, 0),
     "location": "File > Import-Export",
     "description": "FBX addon patched for backwards-compatibility",
@@ -374,6 +374,11 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
             description="Export selected and visible objects only",
             default=False,
             )
+    use_visible: BoolProperty(
+            name='Visible Objects',
+            description='Export visible objects only',
+            default=False
+            )
     use_active_collection: BoolProperty(
             name="Active Collection",
             description="Export only objects from the active collection (and its children)",
@@ -471,6 +476,11 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
             name="Tangent Space",
             description="Add binormal and tangent vectors, together with normal they form the tangent space "
                         "(will only work correctly with tris/quads only meshes!)",
+            default=False,
+            )
+    use_triangles: BoolProperty(
+            name="Triangulate Faces",
+            description="Convert all faces to triangles",
             default=False,
             )
     use_custom_props: BoolProperty(
@@ -681,6 +691,7 @@ class FBX_COMPAT_PT_export_include(bpy.types.Panel):
         sublayout = layout.column(heading="Limit to")
         sublayout.enabled = (operator.batch_mode == 'OFF')
         sublayout.prop(operator, "use_selection")
+        sublayout.prop(operator, "use_visible")
         sublayout.prop(operator, "use_active_collection")
 
         layout.column().prop(operator, "object_types")
@@ -750,6 +761,7 @@ class FBX_COMPAT_PT_export_geometry(bpy.types.Panel):
         #sub.enabled = operator.use_mesh_modifiers and False  # disabled in 2.8...
         #sub.prop(operator, "use_mesh_modifiers_render")
         layout.prop(operator, "use_mesh_edges")
+        layout.prop(operator, "use_triangles")
         sub = layout.row()
         #~ sub.enabled = operator.mesh_smooth_type in {'OFF'}
         sub.prop(operator, "use_tspace")
