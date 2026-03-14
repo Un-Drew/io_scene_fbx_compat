@@ -54,3 +54,7 @@ HAS_REFACTORED_VISIBLE_FLAGS = bpy_type_has_prop(bpy.types.Object, 'visible_shad
 """ Added in 3.1.0 """
 
 HAS_VRTX_AND_PLGN_NORM_ARRAYS = bpy_type_has_prop(bpy.types.Mesh, 'vertex_normals')
+
+""" Added in 3.2.0 """
+
+HAS_MESH_COLOR_ATTRIBUTES = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
