@@ -78,7 +78,7 @@ from .fbx_utils import (
 from . import fbx_api_compat as api_compat
 # COMPAT ADD END
 
-# Units convertors!
+# Units converters!
 convert_sec_to_ktime = units_convertor("second", "ktime")
 convert_sec_to_ktime_iter = units_convertor_iter("second", "ktime")
 
@@ -2283,8 +2283,12 @@ def fbx_data_from_scene(scene, depsgraph, settings):
                         object = mod.object
                         if object and object.type == 'ARMATURE':
                             armature = object.data
-                            backup_pose_positions.append((armature, armature.pose_position))
-                            armature.pose_position = 'REST'
+                            # If armature is already in REST position, there's nothing to back-up
+                            # This cuts down on export time dramatically, if all armatures are already in REST position
+                            # by not triggering dependency graph update
+                            if armature.pose_position != 'REST':
+                                backup_pose_positions.append((armature, armature.pose_position))
+                                armature.pose_position = 'REST'
                     elif mod.show_render or mod.show_viewport:
                         # If exporting with subsurf collect the last Catmull-Clark subsurf modifier
                         # and disable it. We can use the original data as long as this is the first
@@ -2761,6 +2765,7 @@ def fbx_header_elements(root, scene_data, time=None):
     lastsaved("p_string", b"ApplicationName", app_name)
     lastsaved("p_string", b"ApplicationVersion", app_ver)
     lastsaved("p_datetime", b"DateTime_GMT", "01/01/1970 00:00:00.000")
+    original("p_string", b"ApplicationNativeFile", bpy.data.filepath)
 
     # ##### End of FBXHeaderExtension element.
 
