@@ -50,3 +50,7 @@ HAS_BSDF_EMISSION_STRENGTH = py_class_has_prop(bpy_extras.node_shader_utils.Prin
 
 HAS_REFACTORED_UI_DATA = bpy_type_has_func(bpy.types.bpy_struct, 'id_properties_ui')
 HAS_REFACTORED_VISIBLE_FLAGS = bpy_type_has_prop(bpy.types.Object, 'visible_shadow')
+
+""" Added in 3.1.0 """
+
+HAS_VRTX_AND_PLGN_NORM_ARRAYS = bpy_type_has_prop(bpy.types.Mesh, 'vertex_normals')
