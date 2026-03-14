@@ -74,6 +74,10 @@ from .fbx_utils import (
     FBXExportSettingsMedia, FBXExportSettings, FBXExportData,
 )
 
+# COMPAT ADD BEGIN
+from . import fbx_api_compat as api_compat
+# COMPAT ADD END
+
 # Units convertors!
 convert_sec_to_ktime = units_convertor("second", "ktime")
 convert_sec_to_ktime_iter = units_convertor_iter("second", "ktime")
@@ -1286,7 +1290,13 @@ def fbx_data_material_elements(root, ma, scene_data):
     elem_props_template_set(tmpl, props, "p_number", b"DiffuseFactor", 1.0)
     # Principled BSDF only has an emissive color, so we assume factor to be always 1.0.
     elem_props_template_set(tmpl, props, "p_color", b"EmissiveColor", ma_wrap.emission_color)
-    elem_props_template_set(tmpl, props, "p_number", b"EmissiveFactor", 1.0)
+    # COMPAT ADD BEGIN
+    if not api_compat.HAS_BSDF_EMISSION_STRENGTH:
+        emission_strength = 1.0
+    else:
+    ### COMPAT ADD END
+        emission_strength = ma_wrap.emission_strength
+    elem_props_template_set(tmpl, props, "p_number", b"EmissiveFactor", emission_strength)
     # Not in Principled BSDF, so assuming always 0
     elem_props_template_set(tmpl, props, "p_color", b"AmbientColor", ambient_color)
     elem_props_template_set(tmpl, props, "p_number", b"AmbientFactor", 0.0)
@@ -1780,12 +1790,11 @@ def fbx_data_animation_elements(root, scene_data):
 # ##### Top-level FBX data container. #####
 
 # Mapping Blender -> FBX (principled_socket_name, fbx_name).
-PRINCIPLED_TEXTURE_SOCKETS_TO_FBX = (
+PRINCIPLED_TEXTURE_SOCKETS_TO_FBX = [
     # ("diffuse", "diffuse", b"DiffuseFactor"),
     ("base_color_texture", b"DiffuseColor"),
     ("alpha_texture", b"TransparencyFactor"),  # Will be inverted in fact, not much we can do really...
     # ("base_color_texture", b"TransparentColor"),  # Uses diffuse color in Blender!
-    # ("emit", "emit", b"EmissiveFactor"),
     ("emission_color_texture", b"EmissiveColor"),
     # ("ambient", "ambient", b"AmbientFactor"),
     # ("", "", b"AmbientColor"),  # World stuff in Blender, for now ignore...
@@ -1802,7 +1811,11 @@ PRINCIPLED_TEXTURE_SOCKETS_TO_FBX = (
     ("roughness_texture", b"ShininessExponent"),
     # ("mirror", "mirror", b"ReflectionColor"),
     ("metallic_texture", b"ReflectionFactor"),
-)
+]
+# COMPAT ADD BEGIN
+if api_compat.HAS_BSDF_EMISSION_STRENGTH:
+# COMPAT ADD END
+    PRINCIPLED_TEXTURE_SOCKETS_TO_FBX.append(("emission_strength_texture", b"EmissiveFactor"))
 
 
 def fbx_skeleton_from_armature(scene, settings, arm_obj, objects, data_meshes,

@@ -26,6 +26,10 @@ from .fbx_utils import (
     FBXImportSettings,
 )
 
+# COMPAT ADD BEGIN
+from . import fbx_api_compat as api_compat
+# COMPAT ADD END
+
 # global singleton, assign on execution
 fbx_elem_nil = None
 
@@ -1052,6 +1056,12 @@ def blen_read_geom_layer_color(fbx_obj, mesh):
 
             # Always init our new layers with full white opaque color.
             color_lay = mesh.vertex_colors.new(name=fbx_layer_name, do_init=False)
+
+            if color_lay is None:
+                print("Failed to add {%r %r} vertex color layer to %r (probably too many of them?)"
+                      "" % (layer_id, fbx_layer_name, mesh.name))
+                continue
+
             blen_data = color_lay.data
 
             # some valid files omit this data
@@ -1430,10 +1440,17 @@ def blen_read_material(fbx_tmpl, fbx_obj, settings):
     # We have no metallic (a.k.a. reflection) color...
     # elem_props_get_color_rgb(fbx_props, b'ReflectionColor', const_color_white)
     ma_wrap.normalmap_strength = elem_props_get_number(fbx_props, b'BumpFactor', 1.0)
-    # For emission color we can take into account the factor, but only for default values, not in case of texture.
+    # Emission strength and color
     emission_factor = elem_props_get_number(fbx_props, b'EmissiveFactor', 1.0)
-    ma_wrap.emission_color = [c * emission_factor
-                              for c in elem_props_get_color_rgb(fbx_props, b'EmissiveColor', const_color_black)]
+    emission_color = elem_props_get_color_rgb(fbx_props, b'EmissiveColor', const_color_black)
+    # COMPAT ADD BEGIN
+    if not api_compat.HAS_BSDF_EMISSION_STRENGTH:
+        # For emission color we can take into account the factor, but only for default values, not in case of texture.
+        emission_color = [emission_factor * c for c in emission_color]
+    else:
+    # COMPAT ADD END
+        ma_wrap.emission_strength = emission_factor
+    ma_wrap.emission_color = emission_color
 
     nodal_material_wrap_map[ma] = ma_wrap
 
@@ -3124,6 +3141,11 @@ def load(operator, context, filepath="",
                     elif lnk_type in {b'EmissiveColor'}:
                         ma_wrap.emission_color_texture.image = image
                         texture_mapping_set(fbx_lnk, ma_wrap.emission_color_texture)
+                    # COMPAT EDIT BEGIN
+                    elif lnk_type in {b'EmissiveFactor'} and api_compat.HAS_BSDF_EMISSION_STRENGTH:
+                    # COMPAT EDIT END
+                        ma_wrap.emission_strength_texture.image = image
+                        texture_mapping_set(fbx_lnk, ma_wrap.emission_strength_texture)
                     else:
                         print("WARNING: material link %r ignored" % lnk_type)
 
