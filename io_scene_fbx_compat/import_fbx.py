@@ -6,6 +6,7 @@ if "bpy" in locals():
         importlib.reload(fbx_utils)
 
 import bpy
+from bpy.app.translations import pgettext_tip as tip_
 from mathutils import Matrix, Euler, Vector
 
 # -----
@@ -1056,7 +1057,16 @@ def blen_read_geom_layer_uv(fbx_obj, mesh):
                 )
 
 
-def blen_read_geom_layer_color(fbx_obj, mesh):
+def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
+    # COMPAT ADD BEGIN
+    if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+        colors_type = 'LINEAR'  # ignore setting since it's hidden in this case
+    # COMPAT ADD END
+    if colors_type == 'NONE':
+        return
+    use_srgb = colors_type == 'SRGB'
+    layer_type = 'BYTE_COLOR' if use_srgb else 'FLOAT_COLOR'
+    color_prop_name = "color_srgb" if use_srgb else "color"
     # almost same as UV's
     for layer_id in (b'LayerElementColor',):
         for fbx_layer in elem_find_iter(fbx_obj, layer_id):
@@ -1069,8 +1079,13 @@ def blen_read_geom_layer_color(fbx_obj, mesh):
             fbx_layer_data = elem_prop_first(elem_find_first(fbx_layer, b'Colors'))
             fbx_layer_index = elem_prop_first(elem_find_first(fbx_layer, b'ColorIndex'))
 
-            # Always init our new layers with full white opaque color.
-            color_lay = mesh.vertex_colors.new(name=fbx_layer_name, do_init=False)
+            # COMPAT ADD BEGIN
+            if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+                # Always init our new layers with full white opaque color.
+                color_lay = mesh.vertex_colors.new(name=fbx_layer_name, do_init=False)
+            else:
+            # COMPAT ADD END
+                color_lay = mesh.color_attributes.new(name=fbx_layer_name, type=layer_type, domain='CORNER')
 
             if color_lay is None:
                 print("Failed to add {%r %r} vertex color layer to %r (probably too many of them?)"
@@ -1085,7 +1100,7 @@ def blen_read_geom_layer_color(fbx_obj, mesh):
                 continue
 
             blen_read_geom_array_mapped_polyloop(
-                mesh, blen_data, "color",
+                mesh, blen_data, color_prop_name,
                 fbx_layer_data, fbx_layer_index,
                 fbx_layer_mapping, fbx_layer_ref,
                 4, 4, layer_id,
@@ -1284,7 +1299,7 @@ def blen_read_geom(fbx_tmpl, fbx_obj, settings):
 
         blen_read_geom_layer_material(fbx_obj, mesh)
         blen_read_geom_layer_uv(fbx_obj, mesh)
-        blen_read_geom_layer_color(fbx_obj, mesh)
+        blen_read_geom_layer_color(fbx_obj, mesh, settings.colors_type)
 
     if fbx_edges:
         # edges in fact index the polygons (NOT the vertices)
@@ -1355,7 +1370,9 @@ def blen_read_geom(fbx_tmpl, fbx_obj, settings):
     if not ok_smooth:
         mesh.polygons.foreach_set("use_smooth", [True] * len(mesh.polygons))
 
-    if ok_crease:
+    # COMPAT ADD BEGIN
+    if not api_compat.HAS_REFACTORED_EDGE_CREASES and ok_crease:
+    # COMPAT ADD END
         mesh.use_customdata_edge_crease = True
 
     if settings.use_custom_props:
@@ -2368,7 +2385,8 @@ def load(operator, context, filepath="",
          automatic_bone_orientation=False,
          primary_bone_axis='Y',
          secondary_bone_axis='X',
-         use_prepost_rot=True):
+         use_prepost_rot=True,
+         colors_type='SRGB'):
 
     global fbx_elem_nil
     fbx_elem_nil = FBXElem('', (), (), ())
@@ -2402,7 +2420,7 @@ def load(operator, context, filepath="",
         is_ascii = False
 
     if is_ascii:
-        operator.report({'ERROR'}, "ASCII FBX files are not supported %r" % filepath)
+        operator.report({'ERROR'}, tip_("ASCII FBX files are not supported %r") % filepath)
         return {'CANCELLED'}
     del is_ascii
     # End ascii detection.
@@ -2413,11 +2431,11 @@ def load(operator, context, filepath="",
         import traceback
         traceback.print_exc()
 
-        operator.report({'ERROR'}, "Couldn't open file %r (%s)" % (filepath, e))
+        operator.report({'ERROR'}, tip_("Couldn't open file %r (%s)") % (filepath, e))
         return {'CANCELLED'}
 
     if version < 7100:
-        operator.report({'ERROR'}, "Version %r unsupported, must be %r or later" % (version, 7100))
+        operator.report({'ERROR'}, tip_("Version %r unsupported, must be %r or later") % (version, 7100))
         return {'CANCELLED'}
 
     print("FBX version: %r" % version)
@@ -2452,7 +2470,7 @@ def load(operator, context, filepath="",
     fbx_settings = elem_find_first(elem_root, b'GlobalSettings')
     fbx_settings_props = elem_find_first(fbx_settings, b'Properties70')
     if fbx_settings is None or fbx_settings_props is None:
-        operator.report({'ERROR'}, "No 'GlobalSettings' found in file %r" % filepath)
+        operator.report({'ERROR'}, tip_("No 'GlobalSettings' found in file %r") % filepath)
         return {'CANCELLED'}
 
     # FBX default base unit seems to be the centimeter, while raw Blender Unit is equivalent to the meter...
@@ -2507,7 +2525,7 @@ def load(operator, context, filepath="",
         use_custom_props, use_custom_props_enum_as_string,
         nodal_material_wrap_map, image_cache,
         ignore_leaf_bones, force_connect_children, automatic_bone_orientation, bone_correction_matrix,
-        use_prepost_rot,
+        use_prepost_rot, colors_type,
     )
 
     # #### And now, the "real" data.
@@ -2519,10 +2537,10 @@ def load(operator, context, filepath="",
     fbx_connections = elem_find_first(elem_root, b'Connections')
 
     if fbx_nodes is None:
-        operator.report({'ERROR'}, "No 'Objects' found in file %r" % filepath)
+        operator.report({'ERROR'}, tip_("No 'Objects' found in file %r") % filepath)
         return {'CANCELLED'}
     if fbx_connections is None:
-        operator.report({'ERROR'}, "No 'Connections' found in file %r" % filepath)
+        operator.report({'ERROR'}, tip_("No 'Connections' found in file %r") % filepath)
         return {'CANCELLED'}
 
     # ----

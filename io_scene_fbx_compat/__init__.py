@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FBX format - Compat",
     "author": "Back-compat by: UnDrew, Original add-on by: Blender Foundation",
-    "version": (3, 3, 2),
+    "version": (3, 4, 0),
     "blender": (2, 81, 0),
     "location": "File > Import-Export",
     "description": "FBX addon patched for backwards-compatibility",
@@ -37,6 +37,10 @@ from bpy_extras.io_utils import (
         path_reference_mode,
         axis_conversion,
         )
+
+# COMPAT ADD BEGIN
+from . import fbx_api_compat as api_compat
+# COMPAT ADD END
 
 
 @orientation_helper(axis_forward='-Z', axis_up='Y')
@@ -86,6 +90,15 @@ class ImportFBX_compat(bpy.types.Operator, ImportHelper):
             name="Custom Normals",
             description="Import custom normals, if available (otherwise Blender will recompute them)",
             default=True,
+            )
+    colors_type: EnumProperty(
+            name="Vertex Colors",
+            items=(('NONE', "None", "Do not import color attributes"),
+                   ('SRGB', "sRGB", "Expect file colors in sRGB color space"),
+                   ('LINEAR', "Linear", "Expect file colors in linear color space"),
+                   ),
+            description="Import vertex color attributes",
+            default='SRGB',
             )
 
     use_image_search: BoolProperty(
@@ -228,6 +241,10 @@ class FBX_COMPAT_PT_import_include(bpy.types.Panel):
         sub.enabled = operator.use_custom_props
         sub.prop(operator, "use_custom_props_enum_as_string")
         layout.prop(operator, "use_image_search")
+        # COMPAT ADD BEGIN
+        if api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+        # COMPAT ADD END
+            layout.prop(operator, "colors_type")
 
 
 class FBX_COMPAT_PT_import_transform(bpy.types.Panel):
@@ -460,6 +477,15 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
             description="Export smoothing information "
                         "(prefer 'Normals Only' option if your target importer understand split normals)",
             default='OFF',
+            )
+    colors_type: EnumProperty(
+            name="Vertex Colors",
+            items=(('NONE', "None", "Do not export color attributes"),
+                   ('SRGB', "sRGB", "Export colors in sRGB color space"),
+                   ('LINEAR', "Linear", "Export colors in linear color space"),
+                   ),
+            description="Export vertex color attributes",
+            default='SRGB',
             )
     use_subsurf: BoolProperty(
             name="Export Subdivision Surface",
@@ -765,6 +791,10 @@ class FBX_COMPAT_PT_export_geometry(bpy.types.Panel):
         sub = layout.row()
         #~ sub.enabled = operator.mesh_smooth_type in {'OFF'}
         sub.prop(operator, "use_tspace")
+        # COMPAT ADD BEGIN
+        if api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+        # COMPAT ADD END
+            layout.prop(operator, "colors_type")
 
 
 class FBX_COMPAT_PT_export_armature(bpy.types.Panel):
