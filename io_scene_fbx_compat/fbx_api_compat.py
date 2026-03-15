@@ -90,7 +90,7 @@ HAS_VRTX_AND_PLGN_NORM_ARRAYS = bpy_type_has_prop(bpy.types.Mesh, 'vertex_normal
 
 """ Added in 3.2.0 """
 
-HAS_MESH_COL_ATTRS_PROP = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
+HAS_MESH_COL_ATTRS_PROP = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')  # Also when the UI for them changed
 
 """ Added in 3.4.0 """
 

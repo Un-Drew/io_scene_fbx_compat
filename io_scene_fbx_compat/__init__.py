@@ -1,7 +1,7 @@
 bl_info = {
     "name": "FBX format - Compat",
     "author": "Back-compat by: UnDrew, Original add-on by: Blender Foundation",
-    "version": (3, 4, 0),
+    "version": (3, 5, 0),
     "blender": (2, 81, 0),
     "location": "File > Import-Export",
     "description": "FBX addon patched for backwards-compatibility",
@@ -82,7 +82,7 @@ class ImportFBX_compat(bpy.types.Operator, ImportHelper):
             name="Apply Transform",
             description="Bake space transform into object data, avoids getting unwanted rotations to objects when "
                         "target space is not aligned with Blender's space "
-                        "(WARNING! experimental option, use at own risks, known broken with armatures/animations)",
+                        "(WARNING! experimental option, use at own risk, known to be broken with armatures/animations)",
             default=False,
             )
 
@@ -439,7 +439,7 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
             name="Apply Transform",
             description="Bake space transform into object data, avoids getting unwanted rotations to objects when "
                         "target space is not aligned with Blender's space "
-                        "(WARNING! experimental option, use at own risks, known broken with armatures/animations)",
+                        "(WARNING! experimental option, use at own risk, known to be broken with armatures/animations)",
             default=False,
             )
 
@@ -486,6 +486,12 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
                    ),
             description="Export vertex color attributes",
             default='SRGB',
+            )
+    prioritize_active_color: BoolProperty(
+            name="Prioritize Active Color",
+            description="Make sure active color will be exported first. Could be important "
+                        "since some other software can discard other color attributes besides the first one",
+            default=False,
             )
     use_subsurf: BoolProperty(
             name="Export Subdivision Surface",
@@ -554,8 +560,8 @@ class ExportFBX_compat(bpy.types.Operator, ExportHelper):
                    ('LIMBNODE', "LimbNode", "'LimbNode' FBX node, a regular joint between two bones..."),
                   ),
             description="FBX type of node (object) used to represent Blender's armatures "
-                        "(use Null one unless you experience issues with other app, other choices may no import back "
-                        "perfectly in Blender...)",
+                        "(use the Null type unless you experience issues with the other app, "
+                        "as other choices may not import back perfectly into Blender...)",
             default='NULL',
             )
     bake_anim: BoolProperty(
@@ -795,6 +801,7 @@ class FBX_COMPAT_PT_export_geometry(bpy.types.Panel):
         if api_compat.HAS_MESH_COL_ATTRS_PROP and api_compat.HAS_COL_ATTR_SRGB_PROP:
         # COMPAT ADD END
             layout.prop(operator, "colors_type")
+        layout.prop(operator, "prioritize_active_color")
 
 
 class FBX_COMPAT_PT_export_armature(bpy.types.Panel):

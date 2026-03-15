@@ -758,17 +758,19 @@ def fbx_data_mesh_shapes_elements(root, me_obj, me, scene_data, fbx_me_tmpl, fbx
 
     channels = []
 
+    vertices = me.vertices
     for shape, (channel_key, geom_key, shape_verts_co, shape_verts_idx) in shapes.items():
         # Use vgroups as weights, if defined.
         if shape.vertex_group and shape.vertex_group in me_obj.bdata.vertex_groups:
-            shape_verts_weights = [0.0] * (len(shape_verts_co) // 3)
+            shape_verts_weights = array.array(data_types.ARRAY_FLOAT64, [0.0]) * (len(shape_verts_co) // 3)
             vg_idx = me_obj.bdata.vertex_groups[shape.vertex_group].index
             for sk_idx, v_idx in enumerate(shape_verts_idx):
-                for vg in me.vertices[v_idx].groups:
+                for vg in vertices[v_idx].groups:
                     if vg.group == vg_idx:
                         shape_verts_weights[sk_idx] = vg.weight * 100.0
+                        break
         else:
-            shape_verts_weights = [100.0] * (len(shape_verts_co) // 3)
+            shape_verts_weights = array.array(data_types.ARRAY_FLOAT64, [100.0]) * (len(shape_verts_co) // 3)
         channels.append((channel_key, shape, shape_verts_weights))
 
         geom = elem_data_single_int64(root, b"Geometry", get_fbx_uuid_from_key(geom_key))
@@ -784,7 +786,8 @@ def fbx_data_mesh_shapes_elements(root, me_obj, me, scene_data, fbx_me_tmpl, fbx
         elem_data_single_int32_array(geom, b"Indexes", shape_verts_idx)
         elem_data_single_float64_array(geom, b"Vertices", shape_verts_co)
         if write_normals:
-            elem_data_single_float64_array(geom, b"Normals", [0.0] * len(shape_verts_co))
+            elem_data_single_float64_array(geom, b"Normals",
+                                           array.array(data_types.ARRAY_FLOAT64, [0.0]) * len(shape_verts_co))
 
     # Yiha! BindPose for shapekeys too! Dodecasigh...
     # XXX Not sure yet whether several bindposes on same mesh are allowed, or not... :/
@@ -907,7 +910,7 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
     if scene_data.settings.use_mesh_edges:
         t_le = tuple(e.vertices for e in me.edges if e.is_loose)
         t_pvi.extend(chain(*t_le))
-        t_ls.extend(range(loop_nbr, loop_nbr + len(t_le), 2))
+        t_ls.extend(range(loop_nbr, loop_nbr + len(t_le) * 2, 2))
         del t_le
 
     # Edges...
@@ -922,7 +925,12 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
     edges_map = {}
     edges_nbr = 0
     if t_ls and t_pvi:
-        t_ls = set(t_ls)
+        # t_ls is loop start indices of polygons, but we want to use it to indicate the end loop of each polygon.
+        # The loop end index of a polygon is the loop start index of the next polygon minus one, so the first element of
+        # t_ls will be ignored, and we need to add an extra element at the end to signify the end of the last polygon.
+        # If we were to add another polygon to the mesh, its loop start index would be the next loop index.
+        t_ls = set(t_ls[1:])
+        t_ls.add(loop_nbr)
         todo_edges = [None] * len(me.edges) * 2
         # Sigh, cannot access edge.key through foreach_get... :/
         me.edges.foreach_get("vertices", todo_edges)
@@ -1077,11 +1085,14 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                              "cannot compute/export tangent space for it") % me.name)
                 else:
                     del t_lt
-                    t_ln = array.array(data_types.ARRAY_FLOAT64, (0.0,)) * len(me.loops) * 3
+                    num_loops = len(me.loops)
+                    t_ln = array.array(data_types.ARRAY_FLOAT64, (0.0,)) * num_loops * 3
                     # t_lnw = array.array(data_types.ARRAY_FLOAT64, (0.0,)) * len(me.loops)
                     uv_names = [uvlayer.name for uvlayer in me.uv_layers]
-                    for name in uv_names:
-                        me.calc_tangents(uvmap=name)
+                    # Annoying, `me.calc_tangent` errors in case there is no geometry...
+                    if num_loops > 0:
+                        for name in uv_names:
+                            me.calc_tangents(uvmap=name)
                     for idx, uvlayer in enumerate(me.uv_layers):
                         name = uvlayer.name
                         # Loop bitangents (aka binormals).
@@ -1118,7 +1129,8 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
 
     # Write VertexColor Layers.
     # COMPAT ADD BEGIN
-    if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
+    using_color_attributes_api = api_compat.HAS_MESH_COL_ATTRS_PROP and api_compat.HAS_COL_ATTR_SRGB_PROP
+    if not using_color_attributes_api:
         vcollayers = me.vertex_colors
         vcolnumber = len(vcollayers)
         color_prop_name = "color"
@@ -1132,9 +1144,26 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
         def _coltuples_gen(raw_cols):
             return zip(*(iter(raw_cols),) * 4)
 
+        if scene_data.settings.prioritize_active_color:
+            # COMPAT ADD BEGIN
+            if api_compat.HAS_MESH_COL_ATTRS_PROP and not using_color_attributes_api:
+                # After 3.2's "Vertex Colors" -> "Color Attributes" UI change, `LoopColors.active` stopped working,
+                # making `AttributeGroup.active_color` the only way to get the active color layer. But attributes can't
+                # be fully relied on until 3.4 (due to `color_srgb`), so in this brief version window (3.2, 3.3), use
+                # the attribute's name to find the active `MeshLoopColorLayer`.
+                active_color_name = me.color_attributes.active_color.name
+                vcollayers = sorted(vcollayers, key=lambda x: x.name == active_color_name, reverse=True)
+            else:
+                if not using_color_attributes_api:
+                    active_color = me.vertex_colors.active
+                else:
+            # COMPAT ADD END
+                    active_color = me.color_attributes.active_color
+                vcollayers = sorted(vcollayers, key=lambda x: x == active_color, reverse=True)
+
         for colindex, collayer in enumerate(vcollayers):
             # COMPAT ADD BEGIN
-            if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
+            if not using_color_attributes_api:
                 is_point = False
             else:
             # COMPAT ADD END
@@ -1213,10 +1242,9 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
 
                 # We have to validate mat indices, and map them to FBX indices.
                 # Note a mat might not be in me_fbxmats_idx (e.g. node mats are ignored).
-                blmaterials_to_fbxmaterials_idxs = [me_fbxmaterials_idx[m]
-                                                    for m in me_blmaterials if m in me_fbxmaterials_idx]
+                def_ma = next(me_fbxmaterials_idx[m] for m in me_blmaterials if m in me_fbxmaterials_idx)
+                blmaterials_to_fbxmaterials_idxs = [me_fbxmaterials_idx.get(m, def_ma) for m in me_blmaterials]
                 ma_idx_limit = len(blmaterials_to_fbxmaterials_idxs)
-                def_ma = blmaterials_to_fbxmaterials_idxs[0]
                 _gen = (blmaterials_to_fbxmaterials_idxs[m] if m < ma_idx_limit else def_ma for m in t_pm)
                 t_pm = array.array(data_types.ARRAY_INT32, _gen)
 
@@ -2680,8 +2708,13 @@ def fbx_data_from_scene(scene, depsgraph, settings):
             if ob_obj.type not in BLENDER_OBJECT_TYPES_MESHLIKE:
                 continue
             _mesh_key, me, _free = data_meshes[ob_obj]
+            material_indices = mesh_material_indices.setdefault(me, {})
+            if ma in material_indices:
+                # Material has already been found for this mesh.
+                # XXX If a mesh has multiple material slots with the same material, they are combined into one slot.
+                continue
             idx = _objs_indices[ob_obj] = _objs_indices.get(ob_obj, -1) + 1
-            mesh_material_indices.setdefault(me, {})[ma] = idx
+            material_indices[ma] = idx
     del _objs_indices
 
     # Textures
@@ -3063,6 +3096,7 @@ def save_single(operator, scene, depsgraph, filepath="",
                 bake_space_transform=False,
                 armature_nodetype='NULL',
                 colors_type='SRGB',
+                prioritize_active_color=False,
                 **kwargs
                 ):
 
@@ -3130,7 +3164,7 @@ def save_single(operator, scene, depsgraph, filepath="",
         add_leaf_bones, bone_correction_matrix, bone_correction_matrix_inv,
         bake_anim, bake_anim_use_all_bones, bake_anim_use_nla_strips, bake_anim_use_all_actions,
         bake_anim_step, bake_anim_simplify_factor, bake_anim_force_startend_keying,
-        False, media_settings, use_custom_props, colors_type,
+        False, media_settings, use_custom_props, colors_type, prioritize_active_color
     )
 
     import bpy_extras.io_utils

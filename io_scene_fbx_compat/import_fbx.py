@@ -1059,7 +1059,8 @@ def blen_read_geom_layer_uv(fbx_obj, mesh):
 
 def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
     # COMPAT ADD BEGIN
-    if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
+    using_color_attributes_api = api_compat.HAS_MESH_COL_ATTRS_PROP and api_compat.HAS_COL_ATTR_SRGB_PROP
+    if not using_color_attributes_api:
         color_prop_name = "color"
     else:
     # COMPAT ADD END
@@ -1068,7 +1069,7 @@ def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
         use_srgb = colors_type == 'SRGB'
         layer_type = 'BYTE_COLOR' if use_srgb else 'FLOAT_COLOR'
         color_prop_name = "color_srgb" if use_srgb else "color"
-    # almost same as UV's
+    # almost same as UVs
     for layer_id in (b'LayerElementColor',):
         for fbx_layer in elem_find_iter(fbx_obj, layer_id):
             # all should be valid
@@ -1081,7 +1082,7 @@ def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
             fbx_layer_index = elem_prop_first(elem_find_first(fbx_layer, b'ColorIndex'))
 
             # COMPAT ADD BEGIN
-            if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
+            if not using_color_attributes_api:
                 # Always init our new layers with full white opaque color.
                 color_lay = mesh.vertex_colors.new(name=fbx_layer_name, do_init=False)
             else:
@@ -3176,7 +3177,7 @@ def load(operator, context, filepath="",
                         # Intensity actually, not color...
                         ma_wrap.metallic_texture.image = image
                         texture_mapping_set(fbx_lnk, ma_wrap.metallic_texture)
-                    elif lnk_type in {b'TransparentColor', b'TransparentFactor'}:
+                    elif lnk_type in {b'TransparentColor', b'TransparencyFactor'}:
                         ma_wrap.alpha_texture.image = image
                         texture_mapping_set(fbx_lnk, ma_wrap.alpha_texture)
                         if use_alpha_decals:
