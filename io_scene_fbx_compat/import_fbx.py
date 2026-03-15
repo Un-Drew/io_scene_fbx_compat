@@ -1059,14 +1059,15 @@ def blen_read_geom_layer_uv(fbx_obj, mesh):
 
 def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
     # COMPAT ADD BEGIN
-    if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
-        colors_type = 'LINEAR'  # ignore setting since it's hidden in this case
+    if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
+        color_prop_name = "color"
+    else:
     # COMPAT ADD END
-    if colors_type == 'NONE':
-        return
-    use_srgb = colors_type == 'SRGB'
-    layer_type = 'BYTE_COLOR' if use_srgb else 'FLOAT_COLOR'
-    color_prop_name = "color_srgb" if use_srgb else "color"
+        if colors_type == 'NONE':
+            return
+        use_srgb = colors_type == 'SRGB'
+        layer_type = 'BYTE_COLOR' if use_srgb else 'FLOAT_COLOR'
+        color_prop_name = "color_srgb" if use_srgb else "color"
     # almost same as UV's
     for layer_id in (b'LayerElementColor',):
         for fbx_layer in elem_find_iter(fbx_obj, layer_id):
@@ -1080,7 +1081,7 @@ def blen_read_geom_layer_color(fbx_obj, mesh, colors_type):
             fbx_layer_index = elem_prop_first(elem_find_first(fbx_layer, b'ColorIndex'))
 
             # COMPAT ADD BEGIN
-            if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+            if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
                 # Always init our new layers with full white opaque color.
                 color_lay = mesh.vertex_colors.new(name=fbx_layer_name, do_init=False)
             else:

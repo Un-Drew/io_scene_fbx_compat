@@ -75,6 +75,7 @@ def py_class_has_func(pyclass, funcname):
 """ Added in 2.91.0 """
 
 HAS_MESH_ATTRIBUTES = bpy_type_has_prop(bpy.types.Mesh, 'attributes')
+HAS_MESH_VRTX_COLS_AS_ATTRS = HAS_MESH_ATTRIBUTES
 HAS_SUBSURF_BOUNDARY_SMOOTH = bpy_type_has_prop(bpy.types.SubsurfModifier, 'boundary_smooth')
 HAS_BSDF_EMISSION_STRENGTH = py_class_has_prop(bpy_extras.node_shader_utils.PrincipledBSDFWrapper, 'emission_strength')
 
@@ -89,9 +90,10 @@ HAS_VRTX_AND_PLGN_NORM_ARRAYS = bpy_type_has_prop(bpy.types.Mesh, 'vertex_normal
 
 """ Added in 3.2.0 """
 
-HAS_MESH_COLOR_ATTRIBUTES = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
+HAS_MESH_COL_ATTRS_PROP = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
 
 """ Added in 3.4.0 """
 
+HAS_COL_ATTR_SRGB_PROP = bpy_type_has_prop(bpy.types.ByteColorAttributeValue, 'color_srgb')
 HAS_REFACTORED_EDGE_CREASES = bpy_type_has_prop(bpy.types.Mesh, 'edge_creases')  # added 'has_crease_edge' at same time
 HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, check_cycle('beta'))  # unsure how to check this more concretely...

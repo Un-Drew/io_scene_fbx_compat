@@ -242,7 +242,7 @@ class FBX_COMPAT_PT_import_include(bpy.types.Panel):
         sub.prop(operator, "use_custom_props_enum_as_string")
         layout.prop(operator, "use_image_search")
         # COMPAT ADD BEGIN
-        if api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+        if api_compat.HAS_MESH_COL_ATTRS_PROP and api_compat.HAS_COL_ATTR_SRGB_PROP:
         # COMPAT ADD END
             layout.prop(operator, "colors_type")
 
@@ -792,7 +792,7 @@ class FBX_COMPAT_PT_export_geometry(bpy.types.Panel):
         #~ sub.enabled = operator.mesh_smooth_type in {'OFF'}
         sub.prop(operator, "use_tspace")
         # COMPAT ADD BEGIN
-        if api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+        if api_compat.HAS_MESH_COL_ATTRS_PROP and api_compat.HAS_COL_ATTR_SRGB_PROP:
         # COMPAT ADD END
             layout.prop(operator, "colors_type")
 

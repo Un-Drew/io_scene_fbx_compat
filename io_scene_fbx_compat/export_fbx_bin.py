@@ -1117,24 +1117,24 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
         me.free_normals_split()
 
     # Write VertexColor Layers.
-    colors_type = scene_data.settings.colors_type
     # COMPAT ADD BEGIN
-    if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
-        colors_type = 'LINEAR'  # ignore setting since it's hidden in this case
+    if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
         vcollayers = me.vertex_colors
+        vcolnumber = len(vcollayers)
+        color_prop_name = "color"
     else:
     # COMPAT ADD END
+        colors_type = scene_data.settings.colors_type
         vcollayers = me.color_attributes
-    vcolnumber = 0 if colors_type == 'NONE' else len(vcollayers)
+        vcolnumber = 0 if colors_type == 'NONE' else len(vcollayers)
+        color_prop_name = "color_srgb" if colors_type == 'SRGB' else "color"
     if vcolnumber:
         def _coltuples_gen(raw_cols):
             return zip(*(iter(raw_cols),) * 4)
 
-        color_prop_name = "color_srgb" if colors_type == 'SRGB' else "color"
-
         for colindex, collayer in enumerate(vcollayers):
             # COMPAT ADD BEGIN
-            if not api_compat.HAS_MESH_COLOR_ATTRIBUTES:
+            if not api_compat.HAS_MESH_COL_ATTRS_PROP or not api_compat.HAS_COL_ATTR_SRGB_PROP:
                 is_point = False
             else:
             # COMPAT ADD END
