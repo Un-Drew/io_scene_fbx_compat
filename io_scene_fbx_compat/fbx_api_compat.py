@@ -97,3 +97,9 @@ HAS_MESH_COL_ATTRS_PROP = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes')
 HAS_COL_ATTR_SRGB_PROP = bpy_type_has_prop(bpy.types.ByteColorAttributeValue, 'color_srgb')
 HAS_REFACTORED_EDGE_CREASES = bpy_type_has_prop(bpy.types.Mesh, 'edge_creases')  # added 'has_crease_edge' at same time
 HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, check_cycle('beta'))  # unsure how to check this more concretely...
+
+""" Added in 3.5.0 """
+
+HAS_MESH_ATTR_POSITION = check_ver(3, 5, 0, check_cycle('beta'))  # unsure how to check this more concretely...
+HAS_MESH_ATTR_SHARP_EDGE = check_ver(3, 5, 0, check_cycle('beta'))  # unsure how to check this more concretely...
+HAS_UV_LAYER_UV_PROP = bpy_type_has_prop(bpy.types.MeshUVLoopLayer, 'uv')
