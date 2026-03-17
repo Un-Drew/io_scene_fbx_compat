@@ -32,7 +32,7 @@ def cycle_to_num(cycle):
 BL_VER_MAJOR, BL_VER_MINOR, BL_VER_MICRO = bpy.app.version
 BL_VER_CYCLE = cycle_to_num(bpy.app.version_cycle)
 
-def check_ver(min_major, min_minor, min_micro, tie_breaker=True):
+def check_ver(min_major, min_minor, min_micro, min_cycle):
     if BL_VER_MAJOR > min_major:
         return True
     if BL_VER_MAJOR < min_major:
@@ -45,9 +45,6 @@ def check_ver(min_major, min_minor, min_micro, tie_breaker=True):
         return True
     if BL_VER_MICRO < min_micro:
         return False
-    return tie_breaker
-
-def check_cycle(min_cycle):
     return BL_VER_CYCLE >= cycle_to_num(min_cycle)
 
 # Checks whether a bpy type has a property by name.
@@ -70,7 +67,7 @@ def py_class_has_func(pyclass, funcname):
 """ Added in 2.91.0 """
 
 HAS_MESH_ATTRIBUTES = bpy_type_has_prop(bpy.types.Mesh, 'attributes')
-HAS_MESH_VRTX_COLS_AS_ATTRS = HAS_MESH_ATTRIBUTES
+HAS_VRTX_COLS_AS_ATTRS = HAS_MESH_ATTRIBUTES
 HAS_SUBSURF_BOUNDARY_SMOOTH = bpy_type_has_prop(bpy.types.SubsurfModifier, 'boundary_smooth')
 HAS_BSDF_EMISSION_STRENGTH = py_class_has_prop(bpy_extras.node_shader_utils.PrincipledBSDFWrapper, 'emission_strength')
 
@@ -89,12 +86,12 @@ HAS_MESH_COL_ATTRS_PROP = bpy_type_has_prop(bpy.types.Mesh, 'color_attributes') 
 
 """ Added in 3.4.0 """
 
-HAS_COL_ATTR_SRGB_PROP = HAS_MESH_VRTX_COLS_AS_ATTRS and bpy_type_has_prop(bpy.types.ByteColorAttributeValue, 'color_srgb')
+HAS_COL_ATTR_SRGB_PROP = HAS_VRTX_COLS_AS_ATTRS and bpy_type_has_prop(bpy.types.ByteColorAttributeValue, 'color_srgb')
 HAS_REFACTORED_EDGE_CREASES = bpy_type_has_prop(bpy.types.Mesh, 'edge_creases')  # added 'has_crease_edge' at same time
-HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, check_cycle('beta'))  # unsure how to check this more concretely...
+HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, 'beta')  # unsure how to check this more concretely...
 
 """ Added in 3.5.0 """
 
-HAS_MESH_ATTR_POSITION = check_ver(3, 5, 0, check_cycle('beta'))  # unsure how to check this more concretely...
-HAS_MESH_ATTR_SHARP_EDGE = check_ver(3, 5, 0, check_cycle('beta'))  # unsure how to check this more concretely...
+HAS_MESH_ATTR_POSITION = check_ver(3, 5, 0, 'beta')  # unsure how to check this more concretely...
+HAS_MESH_ATTR_SHARP_EDGE = check_ver(3, 5, 0, 'beta')  # unsure how to check this more concretely...
 HAS_UV_LAYER_UV_PROP = bpy_type_has_prop(bpy.types.MeshUVLoopLayer, 'uv')
