@@ -50,15 +50,10 @@ def check_ver(min_major, min_minor, min_micro, tie_breaker=True):
 def check_cycle(min_cycle):
     return BL_VER_CYCLE >= cycle_to_num(min_cycle)
 
-# Checks whether a bpy type (an RNA struct) has a property by name.
-# Source: https://blender.stackexchange.com/a/300562
+# Checks whether a bpy type has a property by name.
+# Adapted from: https://blender.stackexchange.com/a/300562
 def bpy_type_has_prop(btype, propname):
-    # NOTE: Doing some_blender_type.bl_rna returns some sort of metadata bpy_struct for that type.
-    #       The exact same metadata is also accessible from instances of that type.
-    for prop in btype.bl_rna.properties:
-        if prop.identifier == propname:
-            return True
-    return False
+    return propname in btype.bl_rna.properties
 
 def bpy_type_has_func(btype, funcname):
     # NOTE: hasattr, when used on a bpy type, will detect functions.
