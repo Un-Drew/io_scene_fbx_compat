@@ -38,7 +38,9 @@ def reinstall(addon_dir_to_reinstall, addon_name):
     if not os.path.isdir(blender_user_dir):
         print(colorama.Fore.RED + "Directory", blender_user_dir, "doesn't exist!")
         sys.exit(1)
-    for blender_ver_name in os.listdir(blender_user_dir):
+    blender_ver_folders = os.listdir(blender_user_dir)
+    blender_ver_folders.sort()  # Sort them because it looks nicer when logged.
+    for blender_ver_name in blender_ver_folders:
         version_specific_dir = os.path.join(blender_user_dir, blender_ver_name)
         if not os.path.isdir(version_specific_dir):
             continue
