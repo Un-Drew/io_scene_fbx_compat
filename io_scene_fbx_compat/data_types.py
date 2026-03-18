@@ -1,4 +1,5 @@
 BOOL = b'C'[0]
+INT8 = b'Z'[0]
 INT16 = b'Y'[0]
 INT32 = b'I'[0]
 INT64 = b'L'[0]

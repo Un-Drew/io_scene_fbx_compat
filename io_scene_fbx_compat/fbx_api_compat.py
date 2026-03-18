@@ -52,6 +52,10 @@ def check_ver(min_major, min_minor, min_micro, min_cycle):
 def bpy_type_has_prop(btype, propname):
     return propname in btype.bl_rna.properties
 
+def bpy_type_prop_is_readonly(btype, propname):
+    # NOTE: For even more *whacky* info about a property, run: print(dir(btype.bl_rna.properties[propname]))
+    return btype.bl_rna.properties[propname].is_readonly
+
 def bpy_type_has_func(btype, funcname):
     # NOTE: hasattr, when used on a bpy type, will detect functions.
     return hasattr(btype, funcname)
@@ -124,3 +128,13 @@ Source: https://developer.blender.org/docs/release_notes/3.5/python_api/#interna
 HAS_MESH_ATTR_POSITION = check_ver(3, 5, 0, 'beta')  # unsure how to check this more concretely...
 HAS_MESH_ATTR_SHARP_EDGE = check_ver(3, 5, 0, 'beta')  # unsure how to check this more concretely...
 HAS_UV_LAYER_UV_PROP = bpy_type_has_prop(bpy.types.MeshUVLoopLayer, 'uv')
+
+"""
+Added in 3.6.0
+Source: https://developer.blender.org/docs/release_notes/3.6/python_api/#internal-mesh-format
+"""
+
+HAS_REFACTORED_POLYS_FOR_CONSISTENT_ORDER_WITH_LOOPS = bpy_type_prop_is_readonly(bpy.types.MeshPolygon, 'loop_total')
+HAS_MESH_ATTR_SHARP_FACE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
+HAS_MESH_ATTRS_CORNER_VERT_AND_CORNER_EDGE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
+HAS_MESH_ATTR_EDGE_VERTS = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
