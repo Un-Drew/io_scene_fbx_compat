@@ -15,10 +15,12 @@ As such, this module does the following:
 
 import bpy
 import bpy_extras.node_shader_utils
+import sys
 import numpy as np
 
 __author__ = "UnDrew"
 
+PY_VER = sys.version_info
 NUMPY_VER = tuple(int(x, 10) for x in np.__version__.split('.'))
 
 def cycle_to_num(cycle):
@@ -127,6 +129,18 @@ HAS_SUBSURF_BOUNDARY_SMOOTH = class_has_rna_prop(bpy.types.SubsurfModifier, 'bou
 HAS_BSDF_EMISSION_STRENGTH = class_has_py_prop(bpy_extras.node_shader_utils.PrincipledBSDFWrapper, 'emission_strength')
 
 """
+Added in 2.93.0
+Sources:
+    * https://developer.blender.org/docs/release_notes/2.93/python_api/#python-39
+    * https://docs.python.org/3/whatsnew/3.8.html
+"""
+
+# The := operator (commonly called "walrus operator") was only added in Python 3.8, meaning it can't be used in Blender
+# versions before 2.93. Despite adding this condition here, I won't be using the operator at all, because Python seems
+# to validate a whole script's syntax ahead of time.
+HAS_PY_WALRUS = (PY_VER >= (3, 8))
+
+"""
 Added in 3.0.0
 Sources:
     * https://developer.blender.org/docs/release_notes/3.0/python_api/#idproperty-ui-data-api
@@ -165,7 +179,8 @@ Sources:
 HAS_COL_ATTR_SRGB_PROP = HAS_VRTX_COLS_AS_ATTRS and class_has_rna_prop(bpy.types.ByteColorAttributeValue, 'color_srgb')
 HAS_MESH_ATTR_MATERIAL_INDEX = check_ver(3, 4, 0, 'beta')  # unsure how to check this more concretely...
 # NOTE: - This added `Mesh.has_crease_edge` at same time.
-HAS_REFACTORED_EDGE_CREASES = class_has_rna_prop(bpy.types.Mesh, 'edge_creases')
+#       - This still remains True even after `HAS_REFACTORED_EDGE_CREASES_4_0` (see below).
+HAS_REFACTORED_EDGE_CREASES_3_4 = class_has_rna_prop(bpy.types.Mesh, 'edge_creases')
 
 """
 Added in 3.5.0
@@ -185,3 +200,13 @@ HAS_REFACTORED_POLYS_FOR_CONSISTENT_ORDER_WITH_LOOPS = class_rna_prop_is_readonl
 HAS_MESH_ATTR_SHARP_FACE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
 HAS_MESH_ATTRS_CORNER_VERT_AND_CORNER_EDGE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
 HAS_MESH_ATTR_EDGE_VERTS = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
+
+"""
+Added in 4.0.0
+Source: https://developer.blender.org/docs/release_notes/4.0/python_api/#mesh
+"""
+
+HAS_REFACTORED_EDGE_CREASES_4_0 = class_has_py_prop(bpy.types.Mesh, 'edge_creases')
+if HAS_REFACTORED_EDGE_CREASES_4_0:
+    HAS_REFACTORED_EDGE_CREASES_3_4 = True
+HAS_REMOVED_MESH_CALC_NORMALS_FUNC = not class_has_rna_func(bpy.types.Mesh, 'calc_normals')

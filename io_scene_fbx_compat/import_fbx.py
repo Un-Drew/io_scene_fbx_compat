@@ -1603,7 +1603,7 @@ def blen_read_geom(fbx_tmpl, fbx_obj, settings):
         mesh.polygons.foreach_set("use_smooth", np.full(len(mesh.polygons), True, dtype=bool))
 
     # COMPAT ADD BEGIN
-    if not api_compat.HAS_REFACTORED_EDGE_CREASES and ok_crease:
+    if not api_compat.HAS_REFACTORED_EDGE_CREASES_3_4 and ok_crease:
     # COMPAT ADD END
         mesh.use_customdata_edge_crease = True
 
