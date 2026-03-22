@@ -13,6 +13,18 @@ from mathutils import Vector, Matrix
 
 from . import encode_bin, data_types
 
+# COMPAT ADD BEGIN
+try:
+# COMPAT ADD END
+    math_prod = math.prod
+# COMPAT ADD BEGIN : prod() was only added in Python 3.8, so it may fail importing.
+except AttributeError:
+    from functools import reduce
+    from operator import mul
+    def math_prod(iterable, *, start=1):
+        return reduce(mul, iterable, start)
+# COMPAT ADD END
+
 
 # "Constants"
 FBX_VERSION = 7400
@@ -449,7 +461,7 @@ def fast_first_axis_flat(ar):
     Since the dtype of the view could sort in a different order to the dtype of the input array, this isn't typically
     useful for actual sorting, but it is useful for sorting-based uniqueness, such as np.unique."""
     # If there are no rows, each element will be viewed as the new dtype.
-    elements_per_row = math.prod(ar.shape[1:])
+    elements_per_row = math_prod(ar.shape[1:])
     row_itemsize = ar.itemsize * elements_per_row
 
     # Get a dtype with itemsize that equals row_itemsize.

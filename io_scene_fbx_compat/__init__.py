@@ -720,7 +720,12 @@ class FBX_COMPAT_PT_export_include(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        sublayout = layout.column(heading="Limit to")
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_UI_LAYOUT_COLUMN_AND_ROW_HEADINGS:
+            sublayout = layout.column()
+        else:
+        # COMPAT ADD END
+            sublayout = layout.column(heading="Limit to")
         sublayout.enabled = (operator.batch_mode == 'OFF')
         sublayout.prop(operator, "use_selection")
         sublayout.prop(operator, "use_visible")

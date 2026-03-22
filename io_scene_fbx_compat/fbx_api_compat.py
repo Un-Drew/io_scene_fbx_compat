@@ -15,8 +15,11 @@ As such, this module does the following:
 
 import bpy
 import bpy_extras.node_shader_utils
+import numpy as np
 
 __author__ = "UnDrew"
+
+NUMPY_VER = tuple(int(x, 10) for x in np.__version__.split('.'))
 
 def cycle_to_num(cycle):
     if cycle == 'alpha':
@@ -82,6 +85,10 @@ def class_rna_prop_is_readonly(cla, propname):
 def class_has_rna_func(cla, funcname):
     return funcname in cla.bl_rna.functions
 
+# Checks whether a class's RNA function has the specified parameter defined.
+def class_rna_func_has_param(cla, funcname, paramname):
+    return paramname in cla.bl_rna.functions[funcname].parameters
+
 # Checks whether a class has the specified python-defined property (not to be confused with python attributes).
 # NOTE: Sometimes, this is also applicable to natively-defined classes, because they're partially defined in Python.
 #       See: https://projects.blender.org/blender/blender/src/tag/v5.0.0/scripts/modules/_bpy_types.py
@@ -97,6 +104,14 @@ def class_has_py_func(cla, funcname):
 #      Instead, its natively-defined functions are structured similarly to python-defined functions. Idk why?
 def bpy_struct_has_rna_func(funcname):
     return hasattr(bpy.types.bpy_struct, funcname)
+
+"""
+Added in 2.90.0
+Source: https://developer.blender.org/docs/release_notes/2.90/python_api/#user-interface
+"""
+
+HAS_UI_LAYOUT_COLUMN_AND_ROW_HEADINGS = class_rna_func_has_param(bpy.types.UILayout, 'column', 'heading')
+HAS_FOREACH_SET_ENUM_SUPPORT = check_ver(2, 90, 0, 'beta')  # unsure how to check this more concretely...
 
 """
 Added in 2.91.0
@@ -119,6 +134,7 @@ Sources:
     * https://docs.blender.org/api/3.0/bpy.types.Object.html#bpy.types.Object.visible_shadow
 """
 
+HAS_NUMPY_CONCATENATE_DTYPE_PARAM = (NUMPY_VER >= (1, 20))
 HAS_REFACTORED_UI_DATA = bpy_struct_has_rna_func('id_properties_ui')
 HAS_REFACTORED_VISIBLE_FLAGS = class_has_rna_prop(bpy.types.Object, 'visible_shadow')
 

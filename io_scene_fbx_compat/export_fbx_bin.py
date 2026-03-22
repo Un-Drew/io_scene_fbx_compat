@@ -5,7 +5,15 @@ import os
 import time
 
 from itertools import zip_longest
-from functools import cache
+# COMPAT ADD BEGIN
+try:
+# COMPAT ADD END
+    from functools import cache
+# COMPAT ADD BEGIN : @cache was only added in Python 3.9, so it may fail importing.
+except ImportError:
+    from functools import lru_cache
+    cache = lru_cache(maxsize=None)
+# COMPAT ADD END
 
 if "bpy" in locals():
     import importlib

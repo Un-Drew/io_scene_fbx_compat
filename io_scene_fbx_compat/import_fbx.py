@@ -714,8 +714,15 @@ def blen_read_animations_action_item(action, item, cnodes, fps, anim_offset, glo
         num_keys = len(key_values) // 2
         fcurve.keyframe_points.add(num_keys)
         fcurve.keyframe_points.foreach_set('co', key_values)
-        linear_enum_value = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items['LINEAR'].value
-        fcurve.keyframe_points.foreach_set('interpolation', (linear_enum_value,) * num_keys)
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_FOREACH_SET_ENUM_SUPPORT:
+            # Pre-2.90 versions don't provide any to set this more efficiently... I think.
+            for key in fcurve.keyframe_points:
+                key.interpolation = 'LINEAR'
+        else:
+        # COMPAT ADD END
+            linear_enum_value = bpy.types.Keyframe.bl_rna.properties['interpolation'].enum_items['LINEAR'].value
+            fcurve.keyframe_points.foreach_set('interpolation', (linear_enum_value,) * num_keys)
 
     # Since we inserted our keyframes in 'ultra-fast' mode, we have to update the fcurves now.
     for fc in blen_curves:
@@ -1538,8 +1545,15 @@ def blen_read_geom(fbx_tmpl, fbx_obj, settings):
             # followed by the second vertex index of that same edge.
             # Stack edges_a and edges_b as individual columns like np.column_stack((edges_a, edges_b)).
             # np.concatenate is used because np.column_stack doesn't allow specifying the dtype of the returned array.
-            edges_conv = np.concatenate((edges_a.reshape(-1, 1), edges_b.reshape(-1, 1)),
-                                        axis=1, dtype=bl_edge_vertex_indices_dtype, casting='unsafe')
+            arrays_to_concat = (edges_a.reshape(-1, 1), edges_b.reshape(-1, 1))
+            # COMPAT ADD BEGIN
+            if not api_compat.HAS_NUMPY_CONCATENATE_DTYPE_PARAM:
+                edges_conv = np.concatenate(arrays_to_concat, axis=1)
+                edges_conv = astype_view_signedness(edges_conv, bl_edge_vertex_indices_dtype)
+            else:
+            # COMPAT ADD END
+                edges_conv = np.concatenate(arrays_to_concat,
+                                            axis=1, dtype=bl_edge_vertex_indices_dtype, casting='unsafe')
 
             # Add the edges and set their vertex indices.
             mesh.edges.add(len(edges_conv))
