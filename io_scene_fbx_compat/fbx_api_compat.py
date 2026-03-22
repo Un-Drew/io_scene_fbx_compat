@@ -78,15 +78,25 @@ def class_has_rna_prop(cla, propname):
 def class_rna_prop_is_readonly(cla, propname):
     return cla.bl_rna.properties[propname].is_readonly
 
-# Checks whether a class has the specified python property (not to be confused with python attributes).
+# Checks whether a natively-defined class has the specified RNA function.
+def class_has_rna_func(cla, funcname):
+    return funcname in cla.bl_rna.functions
+
+# Checks whether a class has the specified python-defined property (not to be confused with python attributes).
 # NOTE: Sometimes, this is also applicable to natively-defined classes, because they're partially defined in Python.
 #       See: https://projects.blender.org/blender/blender/src/tag/v5.0.0/scripts/modules/_bpy_types.py
 def class_has_py_prop(cla, propname):
     return hasattr(cla, propname)
 
-# Checks whether a class has a function (either natively-defined or python-defined).
-def class_has_func(cla, funcname):
+# Checks whether a class has the specified python-defined function.
+def class_has_py_func(cla, funcname):
     return hasattr(cla, funcname)
+
+# Checks whether bpy.types.bpy_struct has the specified RNA function.
+# XXX: This is separate from class_has_rna_func() because bpy_struct seems to be special and doesn't have bl_rna.
+#      Instead, its natively-defined functions are structured similarly to python-defined functions. Idk why?
+def bpy_struct_has_rna_func(funcname):
+    return hasattr(bpy.types.bpy_struct, funcname)
 
 """
 Added in 2.91.0
@@ -109,7 +119,7 @@ Sources:
     * https://docs.blender.org/api/3.0/bpy.types.Object.html#bpy.types.Object.visible_shadow
 """
 
-HAS_REFACTORED_UI_DATA = class_has_func(bpy.types.bpy_struct, 'id_properties_ui')
+HAS_REFACTORED_UI_DATA = bpy_struct_has_rna_func('id_properties_ui')
 HAS_REFACTORED_VISIBLE_FLAGS = class_has_rna_prop(bpy.types.Object, 'visible_shadow')
 
 """
