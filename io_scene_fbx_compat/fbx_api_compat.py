@@ -62,7 +62,9 @@ official Blender releases, but wouldn't always be correct on pre-release builds.
 changed or replaced in the middle of a release cycle, so to support this, a more concrete check is needed.
 
 Fortunately, both Python and Blender's RNA system allow you, from the class alone, to explicitly check for props/funcs.
-Doing this is much safer than relying on the version alone.
+
+Doing this is much safer than relying on the version alone, and should (hopefully) make it compatible with any daily
+build that was made during that ver's development.
 
 Why stop here:
 
@@ -72,6 +74,10 @@ However, doing this for every instance would risk slowing the addon down, which 
 In contrast, checking the class guarantees me that the result will be consistent throughout the process's lifetime,
 which in turn allows me to cache the result here. Also, personally, I think it's more readable this way.
 """
+
+# Checks whether a module has the specified type or function.
+def module_has_type_or_func(module, typeorfuncname):
+    return hasattr(module, typeorfuncname)
 
 # Checks whether a natively-defined class has the specified RNA property.
 # Adapted from: https://blender.stackexchange.com/a/300562
@@ -90,6 +96,10 @@ def class_has_rna_func(cla, funcname):
 # Checks whether a class's RNA function has the specified parameter defined.
 def class_rna_func_has_param(cla, funcname, paramname):
     return paramname in cla.bl_rna.functions[funcname].parameters
+
+# Checks whether a class's RNA function's parameter is an output (return).
+def class_rna_func_param_is_output(cla, funcname, paramname):
+    return cla.bl_rna.functions[funcname].parameters[paramname].is_output
 
 # Checks whether a class has the specified python-defined property (not to be confused with python attributes).
 # NOTE: Sometimes, this is also applicable to natively-defined classes, because they're partially defined in Python.
@@ -210,3 +220,36 @@ HAS_REFACTORED_EDGE_CREASES_4_0 = class_has_py_prop(bpy.types.Mesh, 'edge_crease
 if HAS_REFACTORED_EDGE_CREASES_4_0:
     HAS_REFACTORED_EDGE_CREASES_3_4 = True
 HAS_REMOVED_MESH_CALC_NORMALS_FUNC = not class_has_rna_func(bpy.types.Mesh, 'calc_normals')
+
+"""
+Added in 4.1.0
+Sources:
+    * https://developer.blender.org/docs/release_notes/4.1/python_api/#mesh
+    * https://docs.blender.org/api/4.1/change_log.html#bpy-types-mesh
+    * https://developer.blender.org/docs/release_notes/4.1/python_api/#additions
+    * https://developer.blender.org/docs/release_notes/4.1/python_api/#layout-panels
+    * https://developer.blender.org/docs/release_notes/4.1/pipeline_assets_io/#new-file-handler-api
+    * https://projects.blender.org/blender/blender/commit/992ec6487b
+    * https://docs.blender.org/api/4.0/bpy_types_enum_items/property_flag_items.html#rna-enum-property-flag-items
+    * https://docs.blender.org/api/4.1/bpy_types_enum_items/property_flag_items.html#rna-enum-property-flag-items
+    * https://docs.blender.org/api/4.0/bpy.app.translations.html
+    * https://docs.blender.org/api/4.1/bpy.app.translations.html#bpy.app.translations.pgettext_rpt
+"""
+
+# Several things happened in the same PR:
+#    * Removed use_auto_smooth and auto_smooth_angle, replaced by new modifier
+#    * Removed create_normals_split(), calc_normals_split() and free_normals_split()
+#    * Made MeshLoop.normal readonly
+#    * Added readonly corner_normals prop
+#    * Added readonly normals_domain prop
+#    * Added set_sharp_from_angle() which rewrites the 'sharp_edge' attr when called.
+HAS_REFACTORED_MESH_SMOOTHING = not class_has_rna_prop(bpy.types.Mesh, 'use_auto_smooth')
+HAS_SHAPEKEY_POINTS_PROP = class_has_rna_prop(bpy.types.ShapeKey, 'points')
+# This was split into 3 PRs, so make sure you check for the latest format.
+HAS_LAYOUT_PANELS = class_has_rna_func(bpy.types.UILayout, 'panel') \
+                            and class_rna_func_has_param(bpy.types.UILayout, 'panel', 'layout_header') \
+                            and class_rna_func_param_is_output(bpy.types.UILayout, 'panel', 'layout_header')
+HAS_FILE_HANDLERS = module_has_type_or_func(bpy.types, 'FileHandler')
+HAS_EXTENDED_DNA_TYPES_4_1 = check_ver(4, 1, 0, 'beta')  # unsure how to check this more concretely...
+HAS_PROPERTY_SKIP_PRESET_OPTION = class_has_rna_prop(bpy.types.Property, 'is_skip_preset')
+HAS_TRANSLATION_FOR_REPORTS = module_has_type_or_func(bpy.app.translations, 'pgettext_rpt')
