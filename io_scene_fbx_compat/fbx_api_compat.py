@@ -145,7 +145,7 @@ Sources:
     * https://docs.python.org/3/whatsnew/3.8.html
 """
 
-# The := operator (commonly called "walrus operator") was only added in Python 3.8, meaning it can't be used in Blender
+# The := operator (commonly called "walrus operator") was only added in Python 3.8, so it can't be used in Blender
 # versions before 2.93. Despite adding this condition here, I won't be using the operator at all, because Python seems
 # to validate a whole script's syntax ahead of time.
 HAS_PY_WALRUS = (PY_VER >= (3, 8))
@@ -168,6 +168,10 @@ Source: https://developer.blender.org/docs/release_notes/3.1/python_api/#other-a
 """
 
 HAS_VRTX_AND_PLGN_NORM_ARRAYS = class_has_rna_prop(bpy.types.Mesh, 'vertex_normals')
+# The match statement (called "switch" in other langs) was only added in Python 3.10, so it can't be used in Blender
+# versions before 3.1. Despite adding this condition here, I won't be using the statement at all, because Python seems
+# to validate a whole script's syntax ahead of time.
+HAS_PY_MATCH = (PY_VER >= (3, 10))
 
 """
 Added in 3.2.0
@@ -203,13 +207,16 @@ HAS_UV_LAYER_UV_PROP = class_has_rna_prop(bpy.types.MeshUVLoopLayer, 'uv')
 
 """
 Added in 3.6.0
-Source: https://developer.blender.org/docs/release_notes/3.6/python_api/#internal-mesh-format
+Sources:
+* https://developer.blender.org/docs/release_notes/3.6/python_api/#internal-mesh-format
+* https://docs.blender.org/api/3.6/change_log.html#bpy-types-mesh
 """
 
 HAS_REFACTORED_POLYS_FOR_CONSISTENT_ORDER_WITH_LOOPS = class_rna_prop_is_readonly(bpy.types.MeshPolygon, 'loop_total')
 HAS_MESH_ATTR_SHARP_FACE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
 HAS_MESH_ATTRS_CORNER_VERT_AND_CORNER_EDGE = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
 HAS_MESH_ATTR_EDGE_VERTS = check_ver(3, 6, 0, 'beta')  # unsure how to check this more concretely...
+HAS_CORN_NORM_ARRAY = class_has_rna_prop(bpy.types.Mesh, 'corner_normals')
 
 """
 Added in 4.0.0
@@ -240,7 +247,6 @@ Sources:
 #    * Removed use_auto_smooth and auto_smooth_angle, replaced by new modifier
 #    * Removed create_normals_split(), calc_normals_split() and free_normals_split()
 #    * Made MeshLoop.normal readonly
-#    * Added readonly corner_normals prop
 #    * Added readonly normals_domain prop
 #    * Added set_sharp_from_angle() which rewrites the 'sharp_edge' attr when called.
 HAS_REFACTORED_MESH_SMOOTHING = not class_has_rna_prop(bpy.types.Mesh, 'use_auto_smooth')
