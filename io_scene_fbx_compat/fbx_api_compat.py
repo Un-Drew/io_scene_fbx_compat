@@ -15,6 +15,7 @@ As such, this module does the following:
 
 import bpy
 import bpy_extras.node_shader_utils
+import bpy_extras.io_utils
 import sys
 import numpy as np
 
@@ -259,3 +260,17 @@ HAS_FILE_HANDLERS = module_has_type_or_func(bpy.types, 'FileHandler')
 HAS_EXTENDED_DNA_TYPES_4_1 = check_ver(4, 1, 0, 'beta')  # unsure how to check this more concretely...
 HAS_PROPERTY_SKIP_PRESET_OPTION = class_has_rna_prop(bpy.types.Property, 'is_skip_preset')
 HAS_TRANSLATION_FOR_REPORTS = module_has_type_or_func(bpy.app.translations, 'pgettext_rpt')
+
+"""
+Added in 4.2.0
+Source: https://developer.blender.org/docs/release_notes/4.2/python_api/#exporters
+"""
+
+# NOTE: This also adds `bpy_extras.io_utils.poll_file_object_drop()`
+HAS_IMPORT_HELPER_INVOKE_POPUP_FUNC = class_has_py_func(bpy_extras.io_utils.ImportHelper, 'invoke_popup')
+HAS_COLLECTION_EXPORTERS = HAS_FILE_HANDLERS and class_has_rna_prop(bpy.types.FileHandler, 'bl_export_operator')
+# NOTE: There's a commit during 4.2's beta for explicitly removing `bl_info` from any extension module. I don't know if
+#       extensions were fully functional at this point, but for my purposes it's enough.
+HAS_EXTENSION_SUPPORT = check_ver(4, 2, 0, 'beta')
+if HAS_EXTENSION_SUPPORT:
+    assert(PY_VER >= (3, 11))
