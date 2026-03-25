@@ -697,7 +697,7 @@ def fbx_data_camera_elements(root, cam_obj, scene_data):
     elem_props_template_set(tmpl, props, "p_double", b"SafeAreaAspectRatio", aspect)
     # Depth of field and Focus distance.
     elem_props_template_set(tmpl, props, "p_bool", b"UseDepthOfField", cam_data.dof.use_dof)
-    elem_props_template_set(tmpl, props, "p_double", b"FocusDistance", cam_data.dof.focus_distance * 1000 * gscale)
+    elem_props_template_set(tmpl, props, "p_double", b"FocusDistance", cam_data.dof.focus_distance * gscale)
     # Default to perspective camera.
     elem_props_template_set(tmpl, props, "p_enum", b"CameraProjectionType", 1 if cam_data.type == 'ORTHO' else 0)
     elem_props_template_set(tmpl, props, "p_double", b"OrthoZoom", cam_data.ortho_scale)
@@ -1265,52 +1265,84 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
     # Loop normals.
     tspacenumber = 0
     if write_normals:
-        # NOTE: this is not supported by importer currently.
-        # XXX Official docs says normals should use IndexToDirect,
-        #     but this does not seem well supported by apps currently...
-        me.calc_normals_split()
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_REFACTORED_MESH_SMOOTHING:
+            me.calc_normals_split()
+        # COMPAT ADD END
 
-        ln_bl_dtype = np.single
-        ln_fbx_dtype = np.float64
-        t_ln = np.empty(len(me.loops) * 3,  dtype=ln_bl_dtype)
-        me.loops.foreach_get("normal", t_ln)
-        t_ln = nors_transformed(t_ln, geom_mat_no, ln_fbx_dtype)
-        if 0:
-            lnidx_fbx_dtype = np.int32
-            lay_nor = elem_data_single_int32(geom, b"LayerElementNormal", 0)
-            elem_data_single_int32(lay_nor, b"Version", FBX_GEOMETRY_NORMAL_VERSION)
-            elem_data_single_string(lay_nor, b"Name", b"")
-            elem_data_single_string(lay_nor, b"MappingInformationType", b"ByPolygonVertex")
-            elem_data_single_string(lay_nor, b"ReferenceInformationType", b"IndexToDirect")
-
-            # Tuple of unique sorted normals and then the index in the unique sorted normals of each normal in t_ln.
-            # Since we don't care about how the normals are sorted, only that they're unique, we can use the fast unique
-            # helper function.
-            t_ln, t_lnidx = fast_first_axis_unique(t_ln.reshape(-1, 3), return_inverse=True)
-
-            # Convert to the type for fbx
-            t_lnidx = astype_view_signedness(t_lnidx, lnidx_fbx_dtype)
-
-            elem_data_single_float64_array(lay_nor, b"Normals", t_ln)
-            # Normal weights, no idea what it is.
-            # t_lnw = np.zeros(len(t_ln), dtype=np.float64)
-            # elem_data_single_float64_array(lay_nor, b"NormalsW", t_lnw)
-
-            elem_data_single_int32_array(lay_nor, b"NormalsIndex", t_lnidx)
-
-            del t_lnidx
-            # del t_lnw
+        normal_bl_dtype = np.single
+        normal_fbx_dtype = np.float64
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_REFACTORED_MESH_SMOOTHING:
+            normals_domain = 'CORNER'
         else:
-            lay_nor = elem_data_single_int32(geom, b"LayerElementNormal", 0)
-            elem_data_single_int32(lay_nor, b"Version", FBX_GEOMETRY_NORMAL_VERSION)
-            elem_data_single_string(lay_nor, b"Name", b"")
-            elem_data_single_string(lay_nor, b"MappingInformationType", b"ByPolygonVertex")
-            elem_data_single_string(lay_nor, b"ReferenceInformationType", b"Direct")
-            elem_data_single_float64_array(lay_nor, b"Normals", t_ln)
-            # Normal weights, no idea what it is.
-            # t_ln = np.zeros(len(me.loops), dtype=np.float64)
-            # elem_data_single_float64_array(lay_nor, b"NormalsW", t_ln)
-        del t_ln
+        # COMPAT ADD END
+            normals_domain = me.normals_domain
+        # COMPAT EDIT BEGIN : Removed use of the match statement (see: fbx_api_compat.HAS_PY_MATCH).
+        if normals_domain == 'POINT':
+        # COMPAT EDIT END
+            # All faces are smooth shaded, so we can get normals from the vertices.
+            normal_source = me.vertex_normals
+            blen_attr = "vector"
+            normal_mapping = b"ByVertice"
+        # External software support for b"ByPolygon" normals does not seem to be as widely available as the other
+        # mappings. See blender/blender#117470.
+        # # COMPAT EDIT BEGIN : Removed use of the match statement (see: fbx_api_compat.HAS_PY_MATCH).
+        # elif normals_domain == 'FACE':
+        # # COMPAT EDIT END
+        #     # Either all faces or all edges are sharp, so we can get normals from the faces.
+        #     normal_source = me.polygon_normals
+        #     blen_attr = "vector"
+        #     normal_mapping = b"ByPolygon"
+        # COMPAT EDIT BEGIN : Removed use of the match statement (see: fbx_api_compat.HAS_PY_MATCH).
+        elif normals_domain in {'CORNER', 'FACE'}:
+        # COMPAT EDIT END
+            # We have a mix of sharp/smooth edges/faces or custom split normals, so need to get normals from
+            # corners.
+            # COMPAT ADD BEGIN
+            if not api_compat.HAS_CORN_NORM_ARRAY:
+                normal_source = me.loops
+                blen_attr = "normal"
+            else:
+            # COMPAT ADD END
+                normal_source = me.corner_normals
+                blen_attr = "vector"
+            normal_mapping = b"ByPolygonVertex"
+        # COMPAT EDIT BEGIN : Removed use of the match statement (see: fbx_api_compat.HAS_PY_MATCH).
+        else:
+        # COMPAT EDIT END
+            # Unreachable
+            raise AssertionError("Unexpected normals domain '%s'" % me.normals_domain)
+        # Each normal has 3 components, so the length is multiplied by 3.
+        t_normal = np.empty(len(normal_source) * 3, dtype=normal_bl_dtype)
+        normal_source.foreach_get(blen_attr, t_normal)
+        t_normal = nors_transformed(t_normal, geom_mat_no, normal_fbx_dtype)
+        normal_idx_fbx_dtype = np.int32
+        lay_nor = elem_data_single_int32(geom, b"LayerElementNormal", 0)
+        elem_data_single_int32(lay_nor, b"Version", FBX_GEOMETRY_NORMAL_VERSION)
+        elem_data_single_string(lay_nor, b"Name", b"")
+        elem_data_single_string(lay_nor, b"MappingInformationType", normal_mapping)
+        # FBX SDK documentation says that normals should use IndexToDirect.
+        elem_data_single_string(lay_nor, b"ReferenceInformationType", b"IndexToDirect")
+
+        # Tuple of unique sorted normals and then the index in the unique sorted normals of each normal in t_normal.
+        # Since we don't care about how the normals are sorted, only that they're unique, we can use the fast unique
+        # helper function.
+        t_normal, t_normal_idx = fast_first_axis_unique(t_normal.reshape(-1, 3), return_inverse=True)
+
+        # Convert to the type for fbx
+        t_normal_idx = astype_view_signedness(t_normal_idx, normal_idx_fbx_dtype)
+
+        elem_data_single_float64_array(lay_nor, b"Normals", t_normal)
+        # Normal weights, no idea what it is.
+        # t_normal_w = np.zeros(len(t_normal), dtype=np.float64)
+        # elem_data_single_float64_array(lay_nor, b"NormalsW", t_normal_w)
+
+        elem_data_single_int32_array(lay_nor, b"NormalsIndex", t_normal_idx)
+
+        del t_normal_idx
+        # del t_normal_w
+        del t_normal
 
         # tspace
         if scene_data.settings.use_tspace:
@@ -1329,7 +1361,7 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                 else:
                     del t_lt
                     num_loops = len(me.loops)
-                    t_ln = np.empty(num_loops * 3, dtype=ln_bl_dtype)
+                    t_ln = np.empty(num_loops * 3, dtype=normal_bl_dtype)
                     # t_lnw = np.zeros(len(me.loops), dtype=np.float64)
                     uv_names = [uvlayer.name for uvlayer in me.uv_layers]
                     # Annoying, `me.calc_tangent` errors in case there is no geometry...
@@ -1347,7 +1379,7 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                         elem_data_single_string(lay_nor, b"MappingInformationType", b"ByPolygonVertex")
                         elem_data_single_string(lay_nor, b"ReferenceInformationType", b"Direct")
                         elem_data_single_float64_array(lay_nor, b"Binormals",
-                                                       nors_transformed(t_ln, geom_mat_no, ln_fbx_dtype))
+                                                       nors_transformed(t_ln, geom_mat_no, normal_fbx_dtype))
                         # Binormal weights, no idea what it is.
                         # elem_data_single_float64_array(lay_nor, b"BinormalsW", t_lnw)
 
@@ -1360,7 +1392,7 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                         elem_data_single_string(lay_nor, b"MappingInformationType", b"ByPolygonVertex")
                         elem_data_single_string(lay_nor, b"ReferenceInformationType", b"Direct")
                         elem_data_single_float64_array(lay_nor, b"Tangents",
-                                                       nors_transformed(t_ln, geom_mat_no, ln_fbx_dtype))
+                                                       nors_transformed(t_ln, geom_mat_no, normal_fbx_dtype))
                         # Tangent weights, no idea what it is.
                         # elem_data_single_float64_array(lay_nor, b"TangentsW", t_lnw)
 
@@ -1368,7 +1400,10 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                     # del t_lnw
                     me.free_tangents()
 
-        me.free_normals_split()
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_REFACTORED_MESH_SMOOTHING:
+            me.free_normals_split()
+        # COMPAT ADD END
 
     # Write VertexColor Layers.
     # COMPAT ADD BEGIN
@@ -2936,7 +2971,12 @@ def fbx_data_from_scene(scene, depsgraph, settings):
                     _cos = MESH_ATTRIBUTE_POSITION.to_ndarray(me.attributes)
             else:
                 _cos = np.empty(len(me.vertices) * 3, dtype=co_bl_dtype)
-                shape_key.data.foreach_get("co", _cos)
+                # COMPAT ADD BEGIN
+                if not api_compat.HAS_SHAPEKEY_POINTS_PROP:
+                    shape_key.data.foreach_get("co", _cos)
+                else:
+                # COMPAT ADD END
+                    shape_key.points.foreach_get("co", _cos)
             return vcos_transformed(_cos, geom_mat_co, co_fbx_dtype)
 
         for shape in me.shape_keys.key_blocks[1:]:
@@ -3291,9 +3331,9 @@ def fbx_header_elements(root, scene_data, time=None):
     app_name = "Blender (stable FBX IO)"
     app_ver = bpy.app.version_string
 
-    import addon_utils
-    import sys
-    addon_ver = addon_utils.module_bl_info(sys.modules[__package__])['version']
+    from . import bl_info
+    addon_ver = bl_info["version"]
+    del bl_info
 
     # ##### Start of FBXHeaderExtension element.
     header_ext = elem_empty(root, b"FBXHeaderExtension")
@@ -3678,31 +3718,35 @@ def save_single(operator, scene, depsgraph, filepath="",
     # Generate some data about exported scene...
     scene_data = fbx_data_from_scene(scene, depsgraph, settings)
 
-    root = elem_empty(None, b"")  # Root element has no id, as it is not saved per se!
+    # Enable multithreaded array compression in FBXElem and wait until all threads are done before exiting the context
+    # manager.
+    with encode_bin.FBXElem.enable_multithreading_cm():
+        # Writing elements into an FBX hierarchy can now begin.
+        root = elem_empty(None, b"")  # Root element has no id, as it is not saved per se!
 
-    # Mostly FBXHeaderExtension and GlobalSettings.
-    fbx_header_elements(root, scene_data)
+        # Mostly FBXHeaderExtension and GlobalSettings.
+        fbx_header_elements(root, scene_data)
 
-    # Documents and References are pretty much void currently.
-    fbx_documents_elements(root, scene_data)
-    fbx_references_elements(root, scene_data)
+        # Documents and References are pretty much void currently.
+        fbx_documents_elements(root, scene_data)
+        fbx_references_elements(root, scene_data)
 
-    # Templates definitions.
-    fbx_definitions_elements(root, scene_data)
+        # Templates definitions.
+        fbx_definitions_elements(root, scene_data)
 
-    # Actual data.
-    fbx_objects_elements(root, scene_data)
+        # Actual data.
+        fbx_objects_elements(root, scene_data)
 
-    # How data are inter-connected.
-    fbx_connections_elements(root, scene_data)
+        # How data are inter-connected.
+        fbx_connections_elements(root, scene_data)
 
-    # Animation.
-    fbx_takes_elements(root, scene_data)
+        # Animation.
+        fbx_takes_elements(root, scene_data)
 
-    # Cleanup!
-    fbx_scene_data_cleanup(scene_data)
+        # Cleanup!
+        fbx_scene_data_cleanup(scene_data)
 
-    # And we are down, we can write the whole thing!
+    # And we are done, all multithreaded tasks are complete, and we can write the whole thing to file!
     encode_bin.write(filepath, root, FBX_VERSION)
 
     # Clear cached ObjectWrappers!
