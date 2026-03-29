@@ -45,8 +45,8 @@ def reinstall(addon_dir_to_reinstall, addon_name):
         if not os.path.isdir(version_specific_dir):
             continue
         addon_dst_dir = ...
-        if os.path.isdir(os.path.join(version_specific_dir, "extensions")):
-            addon_dst_dir = os.path.join(version_specific_dir, "extensions", addon_name)
+        if os.path.isdir(os.path.join(version_specific_dir, "extensions", "user_default")):
+            addon_dst_dir = os.path.join(version_specific_dir, "extensions", "user_default", addon_name)
         elif os.path.isdir(os.path.join(version_specific_dir, "scripts", "addons")):
             addon_dst_dir = os.path.join(version_specific_dir, "scripts", "addons", addon_name)
         else:
