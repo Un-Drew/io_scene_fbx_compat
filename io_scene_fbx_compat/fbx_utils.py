@@ -361,7 +361,7 @@ def _mat4_vec3_array_multiply(mat4, vec3_array, dtype=None, return_4d=False):
 
     # column_vector_multiplication in mathutils_Vector.c uses double precision math for Matrix @ Vector by casting the
     # matrix's values to double precision and then casts back to single precision when returning the result, so at least
-    # double precision math is always be used to match standard Blender behaviour.
+    # double precision math is always be used to match standard Blender behavior.
     math_precision = np.result_type(np.double, vec3_array)
 
     to_multiply = None
@@ -537,7 +537,7 @@ def fast_first_axis_unique(ar, return_unique=True, return_index=False, return_in
 
     Float type caveats:
     All elements of -0.0 in the input array will be replaced with 0.0 to ensure that both values are collapsed into one.
-    NaN values can have lots of different byte representations (e.g. signalling/quiet and custom payloads). Only the
+    NaN values can have lots of different byte representations (e.g. signaling/quiet and custom payloads). Only the
     duplicates of each unique byte representation will be collapsed into one."""
     # At least something should always be returned.
     assert(return_unique or return_index or return_inverse or return_counts)
@@ -730,9 +730,11 @@ def attribute_to_ndarray(attribute, foreach_attribute=None):
 # COMPAT ADD BEGIN
 if not api_compat.HAS_MESH_ATTRIBUTES:
     _type_attribute_group = object
+elif not api_compat.HAS_SPECIALIZED_ATTR_GROUP_TYPES:
+    _type_attribute_group = bpy.types.AttributeGroup
 else:
 # COMPAT ADD END
-    _type_attribute_group = bpy.types.AttributeGroup
+    _type_attribute_group = bpy.types.AttributeGroupMesh
 
 
 @dataclass
@@ -871,7 +873,7 @@ def _key_to_uuid(uuids, key):
             uuid += inc
             if 0 > uuid >= 2**63:
                 # Note that this is more that unlikely, but does not harm anyway...
-                raise ValueError("Unable to generate an UUID for key {}".format(key))
+                raise ValueError("Unable to generate an UUID for key {!r}".format(key))
     return UUID(uuid)
 
 
@@ -1762,7 +1764,7 @@ class ObjectWrapper(metaclass=MetaObjectWrapper):
                 if par_type in {'OBJECT', 'BONE'}:
                     return True
                 else:
-                    print("Sorry, “{}” parenting type is not supported".format(par_type))
+                    print("Sorry, \"{:s}\" parenting type is not supported".format(par_type))
                     return False
             return True
         return False

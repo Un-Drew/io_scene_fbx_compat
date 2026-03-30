@@ -909,7 +909,7 @@ def blen_read_animations_action_item(action, item, cnodes, fps, anim_offset, glo
     'Bake' loc/rot/scale into the action,
     taking any pre_ and post_ matrix into account to transform from fbx into blender space.
     """
-    from bpy.types import Object, PoseBone, ShapeKey, Material, Camera
+    from bpy.types import ShapeKey, Material, Camera
 
     fbx_curves: dict[bytes, dict[int, FBXElem]] = {}
     for curves, fbxprop in cnodes.values():
@@ -1882,9 +1882,12 @@ def blen_read_geom_layer_normal(fbx_obj, mesh, xform=None):
     return False
 
 
-def normalize_vecs(vectors):
-    norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-    np.divide(vectors, norms, out=vectors, where=norms != 0)
+# COMPAT ADD BEGIN
+if not api_compat.HAS_CPP_NORMAL_NORMALIZATION:
+    def normalize_vecs(vectors):
+        norms = np.linalg.norm(vectors, axis=1, keepdims=True)
+        np.divide(vectors, norms, out=vectors, where=norms != 0)
+# COMPAT ADD END
 
 
 def blen_read_geom(fbx_tmpl, fbx_obj, settings):
@@ -2088,9 +2091,12 @@ def blen_read_geom(fbx_tmpl, fbx_obj, settings):
         # COMPAT ADD END
             mesh.attributes["temp_custom_normals"].data.foreach_get("vector", clnors)
 
-        clnors = clnors.reshape(len(mesh.loops), 3)
-        normalize_vecs(clnors)
-        clnors = clnors.reshape(len(mesh.loops) * 3)
+        # COMPAT ADD BEGIN
+        if not api_compat.HAS_CPP_NORMAL_NORMALIZATION:
+            clnors = clnors.reshape(len(mesh.loops), 3)
+            normalize_vecs(clnors)
+            clnors = clnors.reshape(len(mesh.loops) * 3)
+        # COMPAT ADD END
 
         # Iterating clnors into a nested tuple first is faster than passing clnors.reshape(-1, 3) directly into
         # normals_split_custom_set. We use clnors.data since it is a memoryview, which is faster to iterate than clnors.
@@ -2465,8 +2471,8 @@ def blen_read_light(fbx_tmpl, fbx_obj, settings):
     lamp.use_shadow = elem_props_get_bool(fbx_props, b'CastShadow', True)
     if hasattr(lamp, "cycles"):
         lamp.cycles.cast_shadow = lamp.use_shadow
-    # Keeping this for now, but this is not used nor exposed anymore afaik...
-    lamp.shadow_color = elem_props_get_color_rgb(fbx_props, b'ShadowColor', (0.0, 0.0, 0.0))
+    # Removed but could be restored if the value can be applied.
+    # `lamp.shadow_color = elem_props_get_color_rgb(fbx_props, b'ShadowColor', (0.0, 0.0, 0.0))`
 
     if settings.use_custom_props:
         blen_read_custom_properties(fbx_obj, lamp, settings)
