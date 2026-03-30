@@ -618,7 +618,7 @@ def fbx_data_light_elements(root, lamp, scene_data):
     elem_props_template_set(tmpl, props, "p_color", b"Color", lamp.color)
     elem_props_template_set(tmpl, props, "p_number", b"Intensity", lamp.energy * 100.0)
     elem_props_template_set(tmpl, props, "p_enum", b"DecayType", FBX_LIGHT_DECAY_TYPES['INVERSE_SQUARE'])
-    elem_props_template_set(tmpl, props, "p_double", b"DecayStart", 25.0 * gscale) # 25 is old Blender default
+    elem_props_template_set(tmpl, props, "p_double", b"DecayStart", 25.0 * gscale)  # 25 is old Blender default
     elem_props_template_set(tmpl, props, "p_bool", b"CastShadows", do_shadow)
     elem_props_template_set(tmpl, props, "p_color", b"ShadowColor", shadow_color)
     if lamp.type in {'SPOT'}:
@@ -892,13 +892,13 @@ def fbx_data_mesh_elements(root, me_obj, scene_data, done_meshes):
                 last_subsurf = mod
 
         if last_subsurf:
-            elem_data_single_int32(geom, b"Smoothness", 2) # Display control mesh and smoothed
+            elem_data_single_int32(geom, b"Smoothness", 2)  # Display control mesh and smoothed
             # COMPAT EDIT BEGIN
             if api_compat.HAS_SUBSURF_BOUNDARY_SMOOTH and last_subsurf.boundary_smooth == "PRESERVE_CORNERS":
             # COMPAT EDIT END
-                elem_data_single_int32(geom, b"BoundaryRule", 1) # CreaseAll
+                elem_data_single_int32(geom, b"BoundaryRule", 1)  # CreaseAll
             else:
-                elem_data_single_int32(geom, b"BoundaryRule", 2) # CreaseEdge
+                elem_data_single_int32(geom, b"BoundaryRule", 2)  # CreaseEdge
             elem_data_single_int32(geom, b"PreviewDivisionLevels", last_subsurf.levels)
             elem_data_single_int32(geom, b"RenderDivisionLevels", last_subsurf.render_levels)
 
@@ -1857,9 +1857,9 @@ def fbx_data_texture_file_elements(root, blender_tex_key, scene_data):
     alpha_source = 0  # None
     if img.alpha_mode != 'NONE':
         # ~ if tex.texture.use_calculate_alpha:
-            # ~ alpha_source = 1  # RGBIntensity as alpha.
+        # ~ alpha_source = 1  # RGBIntensity as alpha.
         # ~ else:
-            # ~ alpha_source = 2  # Black, i.e. alpha channel.
+        # ~ alpha_source = 2  # Black, i.e. alpha channel.
         alpha_source = 2  # Black, i.e. alpha channel.
     # BlendMode not useful for now, only affects layered textures afaics.
     mapping = 0  # UV.
@@ -1894,7 +1894,8 @@ def fbx_data_texture_file_elements(root, blender_tex_key, scene_data):
     elem_props_template_set(tmpl, props, "p_enum", b"WrapModeV", wrap_mode)
     elem_props_template_set(tmpl, props, "p_vector_3d", b"Translation", tex.translation)
     elem_props_template_set(tmpl, props, "p_vector_3d", b"Rotation", (-r for r in tex.rotation))
-    elem_props_template_set(tmpl, props, "p_vector_3d", b"Scaling", (((1.0 / s) if s != 0.0 else 1.0) for s in tex.scale))
+    elem_props_template_set(tmpl, props, "p_vector_3d", b"Scaling",
+                            (((1.0 / s) if s != 0.0 else 1.0) for s in tex.scale))
     # UseMaterial should always be ON imho.
     elem_props_template_set(tmpl, props, "p_bool", b"UseMaterial", True)
     elem_props_template_set(tmpl, props, "p_bool", b"UseMipMap", False)
@@ -1947,7 +1948,7 @@ def fbx_data_video_elements(root, vid, scene_data):
                 msetts.embedded_set.add(filepath)
     # Looks like we'd rather not write any 'Content' element in this case (see T44442).
     # Sounds suspect, but let's try it!
-    #~ else:
+    # ~ else:
         #~ elem_data_single_bytes(fbx_vid, b"Content", b"")
 
     # Blender currently has no UI for editing custom properties on Images, but the importer will import Image custom
@@ -1956,7 +1957,6 @@ def fbx_data_video_elements(root, vid, scene_data):
     # Nodes are more like Blender's Shader Nodes than Images, which is what we're exporting here.
     if scene_data.settings.use_custom_props:
         fbx_data_element_custom_properties(props, vid)
-
 
 
 def fbx_data_armature_elements(root, arm_obj, scene_data):
@@ -2054,8 +2054,9 @@ def fbx_data_armature_elements(root, arm_obj, scene_data):
                 #          **it is stored in bone space in FBX data!** See:
                 #          http://area.autodesk.com/forum/autodesk-fbx/fbx-sdk/why-the-values-return-
                 #                 by-fbxcluster-gettransformmatrix-x-not-same-with-the-value-in-ascii-fbx-file/
-                elem_data_single_float64_array(fbx_clstr, b"Transform",
-                                               matrix4_to_array(mat_world_bones[bo_obj].inverted_safe() @ mat_world_obj))
+                elem_data_single_float64_array(
+                    fbx_clstr, b"Transform", matrix4_to_array(
+                        mat_world_bones[bo_obj].inverted_safe() @ mat_world_obj))
                 elem_data_single_float64_array(fbx_clstr, b"TransformLink", matrix4_to_array(mat_world_bones[bo_obj]))
                 elem_data_single_float64_array(fbx_clstr, b"TransformAssociateModel", matrix4_to_array(mat_world_arm))
 
@@ -2362,7 +2363,7 @@ def fbx_skeleton_from_armature(scene, settings, arm_obj, objects, data_meshes,
         _key, me, _free = data_meshes[ob_obj]
         clusters = {bo: get_blender_bone_cluster_key(arm_obj.bdata, me, bo.bdata) for bo in bones}
         data_deformers_skin.setdefault(arm_obj, {})[me] = (get_blender_armature_skin_key(arm_obj.bdata, me),
-                                                                      ob_obj, clusters)
+                                                           ob_obj, clusters)
 
         # We don't want a regular parent relationship for those in FBX...
         arm_parents.add((arm_obj, ob_obj))
@@ -2647,7 +2648,7 @@ def fbx_animations(scene_data):
             # Some actions are read-only, one cause is being in NLA tweakmode
             restore_use_tweak_mode = ob.animation_data.use_tweak_mode
             if ob.animation_data.is_property_readonly('action'):
-              ob.animation_data.use_tweak_mode = False
+                ob.animation_data.use_tweak_mode = False
 
             # We have to remove active action from objects, it overwrites strips actions otherwise...
             ob_actions.append((ob, ob.animation_data.action, restore_use_tweak_mode))
@@ -2872,6 +2873,8 @@ def fbx_data_from_scene(scene, depsgraph, settings):
                 # XXX: When exporting with subsurf information temporarily disable
                 # the last subsurf modifier.
                 tmp_mods.append((last_subsurf, last_subsurf.show_render, last_subsurf.show_viewport))
+                last_subsurf.show_render = False
+                last_subsurf.show_viewport = False
 
         if do_evaluate:
             # If modifiers has been altered need to update dependency graph.
@@ -3331,9 +3334,28 @@ def fbx_header_elements(root, scene_data, time=None):
     app_name = "Blender (stable FBX IO)"
     app_ver = bpy.app.version_string
 
-    from . import bl_info
-    addon_ver = bl_info["version"]
-    del bl_info
+    # COMPAT ADD BEGIN
+    addon_ver = "Unknown add-on version"
+    try:
+        if api_compat.HAS_EXTENSION_SUPPORT:
+            import tomllib
+            with open(os.path.join(os.path.dirname(__file__), 'blender_manifest.toml'), 'rb') as f:
+                config = tomllib.load(f)
+                addon_ver = config['version']
+            del tomllib
+        else:
+    # COMPAT ADD END
+            from . import bl_info
+            addon_ver = bl_info["version"]
+            addon_ver = "%d.%d.%d" % (addon_ver[0], addon_ver[1], addon_ver[2])
+            del bl_info
+    # COMPAT ADD BEGIN
+    except Exception as e:
+        print("WARNING: Unable to get add-on version from",
+              ".toml!" if api_compat.HAS_EXTENSION_SUPPORT else "bl_info!",
+              "Writing add-on ver as unknown. Raised:",
+              e)
+    # COMPAT ADD END
 
     # ##### Start of FBXHeaderExtension element.
     header_ext = elem_empty(root, b"FBXHeaderExtension")
@@ -3357,8 +3379,8 @@ def fbx_header_elements(root, scene_data, time=None):
     elem_data_single_int32(elem, b"Second", time.second)
     elem_data_single_int32(elem, b"Millisecond", time.microsecond // 1000)
 
-    elem_data_single_string_unicode(header_ext, b"Creator", "%s - %s - %d.%d.%d"
-                                                % (app_name, app_ver, addon_ver[0], addon_ver[1], addon_ver[2]))
+    elem_data_single_string_unicode(header_ext, b"Creator", "%s - %s - %s"
+                                                % (app_name, app_ver, addon_ver))
 
     # 'SceneInfo' seems mandatory to get a valid FBX file...
     # TODO use real values!
@@ -3403,8 +3425,8 @@ def fbx_header_elements(root, scene_data, time=None):
                                     "".format(time.year, time.month, time.day, time.hour, time.minute, time.second,
                                               time.microsecond * 1000))
 
-    elem_data_single_string_unicode(root, b"Creator", "%s - %s - %d.%d.%d"
-                                          % (app_name, app_ver, addon_ver[0], addon_ver[1], addon_ver[2]))
+    elem_data_single_string_unicode(root, b"Creator", "%s - %s - %s"
+                                          % (app_name, app_ver, addon_ver))
 
     # ##### Start of GlobalSettings element.
     global_settings = elem_empty(root, b"GlobalSettings")
@@ -3414,15 +3436,15 @@ def fbx_header_elements(root, scene_data, time=None):
 
     props = elem_properties(global_settings)
     up_axis, front_axis, coord_axis = RIGHT_HAND_AXES[scene_data.settings.to_axes]
-    #~ # DO NOT take into account global scale here! That setting is applied to object transformations during export
-    #~ # (in other words, this is pure blender-exporter feature, and has nothing to do with FBX data).
-    #~ if scene_data.settings.apply_unit_scale:
-        #~ # Unit scaling is applied to objects' scale, so our unit is effectively FBX one (centimeter).
-        #~ scale_factor_org = 1.0
-        #~ scale_factor = 1.0 / units_blender_to_fbx_factor(scene)
-    #~ else:
-        #~ scale_factor_org = units_blender_to_fbx_factor(scene)
-        #~ scale_factor = scale_factor_org
+    # ~ # DO NOT take into account global scale here! That setting is applied to object transformations during export
+    # ~ # (in other words, this is pure blender-exporter feature, and has nothing to do with FBX data).
+    # ~ if scene_data.settings.apply_unit_scale:
+    # ~ # Unit scaling is applied to objects' scale, so our unit is effectively FBX one (centimeter).
+    # ~ scale_factor_org = 1.0
+    # ~ scale_factor = 1.0 / units_blender_to_fbx_factor(scene)
+    # ~ else:
+    # ~ scale_factor_org = units_blender_to_fbx_factor(scene)
+    # ~ scale_factor = scale_factor_org
     scale_factor = scale_factor_org = scene_data.settings.unit_scale
     elem_props_set(props, "p_integer", b"UpAxis", up_axis[0])
     elem_props_set(props, "p_integer", b"UpAxisSign", up_axis[1])
@@ -3662,7 +3684,7 @@ def save_single(operator, scene, depsgraph, filepath="",
     elif apply_scale_options == 'FBX_SCALE_CUSTOM':
         global_matrix = Matrix.Scale(unit_scale, 4) @ global_matrix
         unit_scale = global_scale
-    else: # if apply_scale_options == 'FBX_SCALE_ALL':
+    else:  # if apply_scale_options == 'FBX_SCALE_ALL':
         unit_scale = global_scale * unit_scale
 
     global_scale = global_matrix.median_scale
@@ -3685,7 +3707,6 @@ def save_single(operator, scene, depsgraph, filepath="",
                                                  to_up='Y',
                                                  ).to_4x4()
         bone_correction_matrix_inv = bone_correction_matrix.inverted()
-
 
     media_settings = FBXExportSettingsMedia(
         path_mode,
@@ -3807,6 +3828,7 @@ def save(operator, context,
          use_selection=False,
          use_visible=False,
          use_active_collection=False,
+         collection="",
          batch_mode='OFF',
          use_batch_own_dir=False,
          **kwargs
@@ -3827,13 +3849,23 @@ def save(operator, context,
 
     if batch_mode == 'OFF':
         kwargs_mod = kwargs.copy()
+
+        source_collection = None
         if use_active_collection:
-            if use_selection:
-                ctx_objects = tuple(obj
-                                    for obj in context.view_layer.active_layer_collection.collection.all_objects
-                                    if obj.select_get())
+            source_collection = context.view_layer.active_layer_collection.collection
+        elif collection:
+            local_collection = bpy.data.collections.get((collection, None))
+            if local_collection:
+                source_collection = local_collection
             else:
-                ctx_objects = context.view_layer.active_layer_collection.collection.all_objects
+                operator.report({'ERROR'}, "Collection '%s' was not found" % collection)
+                return {'CANCELLED'}
+
+        if source_collection:
+            if use_selection:
+                ctx_objects = tuple(obj for obj in source_collection.all_objects if obj.select_get())
+            else:
+                ctx_objects = source_collection.all_objects
         else:
             if use_selection:
                 ctx_objects = context.selected_objects
