@@ -274,3 +274,13 @@ HAS_COLLECTION_EXPORTERS = HAS_FILE_HANDLERS and class_has_rna_prop(bpy.types.Fi
 HAS_EXTENSION_SUPPORT = check_ver(4, 2, 0, 'beta')
 if HAS_EXTENSION_SUPPORT:
     assert(PY_VER >= (3, 11))
+
+"""
+Added in 4.3.0
+Sources:
+ * https://developer.blender.org/docs/release_notes/4.3/python_api/#attributes
+ * https://projects.blender.org/blender/blender/commit/1939eb03a7b0e78828888797c6e7371cdafdc044
+"""
+
+HAS_SPECIALIZED_ATTR_GROUP_TYPES = module_has_type_or_func(bpy.types, 'AttributeGroupMesh')
+HAS_CPP_NORMAL_NORMALIZATION = check_ver(4, 3, 0, 'beta')  # unsure how to check this more concretely...
