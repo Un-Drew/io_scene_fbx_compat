@@ -14,6 +14,10 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
+    # COMPAT ADD BEGIN
+    if "fbx_api_compat" in locals():
+        importlib.reload(fbx_api_compat)
+    # COMPAT ADD END
     if "import_fbx" in locals():
         importlib.reload(import_fbx)
     if "export_fbx_bin" in locals():
