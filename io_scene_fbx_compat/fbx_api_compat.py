@@ -7,10 +7,7 @@ Since that addon was normally bundled with Blender, there was (presumably) no in
 make it backwards-compatible with APIs in older versions. However, because this project aims to be backwards-compatible,
 some API calls need to be done conditionally.
 
-As such, this module does the following:
-
-* Keeps track of which API features are available.
-* Sometimes, provides functions that conditionally use the appropriate API.
+As such, this module keeps track of which of these API features are available in the current Blender version.
 """
 
 import bpy
