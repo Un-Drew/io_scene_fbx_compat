@@ -4,6 +4,10 @@ This is an edit of Blender's [FBX IO addon](https://projects.blender.org/blender
 
 Currently, this project supports Blender versions from **2.81 to 5.1**.
 
+# Downloading and installing
+
+You can download the latest *.zip file from the [Releases](https://github.com/Un-Drew/io_scene_fbx_compat/releases) tab, which can be installed like any addon/extension.
+
 # Context and motivation
 
 Almost every Blender release (except patch versions) brings a number of API changes with it. The FBX addon is normally part of Blender, so when it's eventually updated to use that new API, there's no incentive to keep it compatible with older versions. This means that any fixes or new features that the addon receives are also locked behind that newer Blender release, even when that might not be necessary.
