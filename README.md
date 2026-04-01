@@ -1,13 +1,18 @@
 # What's this?
 
-This project aims to edit Blender's official FBX IO addon to make it backwards-compatible with multiple versions of Blender.
+This is an edit of Blender's [FBX IO addon](https://projects.blender.org/blender/blender/src/branch/main/scripts/addons_core/io_scene_fbx) that makes it backwards-compatible with older Blender versions. It tries, where possible, to keep any bug-fixes/improvements/features that the addon has received over the years.
 
-More specifically, this addon has 2 goals:
-1. Use the appropriate API functions depending on the version of Blender that it's installed on.
-2. Keep any bug-fixes/features that have been added throughout the years, to make them available to older versions.
+Currently, this project supports Blender versions from **2.81 to 5.1**.
 
-Currently, this project supports Blender versions from **2.81 to 5.0**.
+# Context and motivation
 
-# Context
+Almost every Blender release (except patch versions) brings a number of API changes with it. The FBX addon is normally part of Blender, so when it's eventually updated to use that new API, there's no incentive to keep it compatible with older versions. This means that any fixes or new features that the addon receives are also locked behind that newer Blender release, even when that might not be necessary.
 
-Many of Blender's major & minor updates have introduced a bunch of API changes. For some of these, the FBX python addon had to be updated to support/leverage that new API. Since that addon was normally bundled with Blender, there was (presumably) no incentive for the Blender developers to make it backwards-compatible with APIs in older versions.
+This project attempts to solve this problem by providing an addon that behaves mostly the same in older versions. In addition, it can also act as a good base for anyone that wants to modify the addon further for any specific use-cases.
+
+> [!NOTE]
+> Currently it doesn't support releases older than **2.81**. While I would like to support older versions, 2.79 and 2.80 introduce a lot of changes to sift through, which I don't have a lot of time for. So, at the moment, they're considered out-of-scope.
+
+# License
+
+This uses the same license as the original addon, which is [GPL-2.0-or-later](https://spdx.org/licenses/GPL-2.0-or-later.html).
