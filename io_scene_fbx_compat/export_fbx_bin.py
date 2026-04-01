@@ -3095,6 +3095,14 @@ def fbx_data_from_scene(scene, depsgraph, settings):
 
         sk_base = me.shape_keys.key_blocks[0]
 
+        # COMPAT ADD BEGIN: HACK: Fallback to basis normals in 3.1.X. See: HAS_FIXED_SHAPEKEY_NORM_AFTER_NORM_REFACTOR
+        _override_sk_nors = None
+        if api_compat.HAS_REFACTORED_MESH_NORM and not api_compat.HAS_FIXED_SHAPEKEY_NORM_AFTER_NORM_REFACTOR:
+            _override_sk_nors = np.empty(len(me.vertices) * 3, dtype=normal_bl_dtype)
+            me.vertices.foreach_get("normal", _override_sk_nors)
+            _override_sk_nors = nors_transformed(_override_sk_nors, geom_mat_no, normal_fbx_dtype)
+        # COMPAT ADD END
+
         # Get and cache only the cos that we need
         @cache
         def sk_cos_nors(shape_key):
@@ -3114,10 +3122,16 @@ def fbx_data_from_scene(scene, depsgraph, settings):
                 else:
                 # COMPAT ADD END
                     shape_key.points.foreach_get("co", _cos)
-            _nors = np.array(shape_key.normals_vertex_get(), dtype=normal_bl_dtype)
+            # COMPAT ADD BEGIN
+            if _override_sk_nors is not None:
+                _nors = _override_sk_nors
+            else:
+            # COMPAT ADD END
+                _nors = np.array(shape_key.normals_vertex_get(), dtype=normal_bl_dtype)
+                _nors = nors_transformed(_nors, geom_mat_no, normal_fbx_dtype)
             return (
                 vcos_transformed(_cos, geom_mat_co, co_fbx_dtype),
-                nors_transformed(_nors, geom_mat_no, normal_fbx_dtype)
+                _nors
             )
 
         for shape in me.shape_keys.key_blocks[1:]:
@@ -3145,6 +3159,9 @@ def fbx_data_from_scene(scene, depsgraph, settings):
             data_deformers_shape.setdefault(me, (me_key, shapes_key, {}))[2][shape] = data
 
         del sk_cos_nors
+        # COMPAT ADD BEGIN
+        del _override_sk_nors
+        # COMPAT ADD END
 
     perfmon.step("FBX export prepare: Wrapping Armatures...")
 
