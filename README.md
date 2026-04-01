@@ -15,7 +15,7 @@ Almost every Blender release (except patch versions) brings a number of API chan
 This project attempts to solve this problem by providing an addon that behaves mostly the same in older versions. In addition, it can also act as a good base for anyone that wants to modify the addon further for any specific use-cases.
 
 > [!NOTE]
-> Currently it doesn't support releases older than **2.81**. While I would like to support older versions, 2.79 and 2.80 introduce a lot of changes to sift through, which I don't have a lot of time for. So, at the moment, they're considered out-of-scope.
+> Currently it doesn't support releases older than **2.81**. While I would like to support older versions, 2.80 and 2.81 introduce a lot of changes to sift through, which I don't have a lot of time for. So, at the moment, they're considered out-of-scope.
 
 # License
 
