@@ -278,7 +278,7 @@ HAS_COLLECTION_EXPORTERS = HAS_FILE_HANDLERS and class_has_rna_prop(bpy.types.Fi
 #       extensions were fully functional at this point, but for my purposes it's enough.
 HAS_EXTENSION_SUPPORT = check_ver(4, 2, 0, 'beta')
 if HAS_EXTENSION_SUPPORT:
-    assert(PY_VER >= (3, 11))
+    assert PY_VER >= (3, 11)
 _ANIM_LAYERED_1_EXPERIMENTAL = check_ver(4, 2, 0, 'alpha') \
                                     and class_has_rna_prop(bpy.types.PreferencesExperimental, 'use_animation_baklava')
 
@@ -301,7 +301,7 @@ Source: https://developer.blender.org/docs/release_notes/4.4/animation_rigging/#
 # Adds the action Slots feature, and Channel Bags, Layers, Strips to the API (not exposed in UI yet, so one-strip limit)
 HAS_ANIM_LAYERED_1_STABLE = check_ver(4, 4, 0, 'alpha', tie_breaker_func=lambda: not _ANIM_LAYERED_1_EXPERIMENTAL)
 if HAS_ANIM_LAYERED_1_STABLE:
-    assert(not _ANIM_LAYERED_1_EXPERIMENTAL)
+    assert not _ANIM_LAYERED_1_EXPERIMENTAL
 
 """
 Added in 4.5.0
