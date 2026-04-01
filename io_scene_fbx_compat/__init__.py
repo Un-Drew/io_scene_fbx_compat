@@ -8,7 +8,7 @@ bl_info = {
     "location": "File > Import-Export",
     "description": "FBX addon patched for backwards-compatibility",
     "warning": "",
-    "doc_url": "{BLENDER_MANUAL_URL}/addons/import_export/scene_fbx.html",
+    "doc_url": "https://github.com/Un-Drew/io_scene_fbx_compat",
     "support": 'COMMUNITY',
     "category": "Import-Export",
 }
